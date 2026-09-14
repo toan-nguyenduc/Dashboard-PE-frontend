@@ -3,7 +3,9 @@
  * Base URL sourced from environment variable.
  */
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'https://relenting-quickly-overbuilt.ngrok-free.dev/api';
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.NEXT_PUBLIC_API_URL ||
+  'https://relenting-quickly-overbuilt.ngrok-free.dev/api';
 
 export const API_CONFIG = {
   baseUrl: API_BASE_URL,
