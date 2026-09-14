@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # Máy chủ Keycloak SSO (Chạy chế độ dev siêu nhanh, lưu dữ liệu realm vào volume)
+  # ============================================================================
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: pe-keycloak
+    command: start-dev --http-port=8080
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8180:8080"
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+    restart: unless-stopped
+    networks:
+      - pe-network
+
+  # ============================================================================
+  # Dashboard PE Backend (Build từ Dockerfile JRE Alpine siêu nhẹ ~160MB)
+  # ============================================================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pe-backend
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./backend/.env
+    environment:
+      # Browser token xác thực issuer qua localhost:8180
+      KEYCLOAK_ISSUER_URI: http://localhost:8180/realms/pe-realm
+      # Backend lấy public keys trực tiếp từ container keycloak qua mạng nội bộ Docker
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/pe-realm/protocol/openid-connect/certs
+      CORS_ALLOWED_ORIGINS: http://localhost:5173
+    depends_on:
+      - keycloak
+    restart: unless-stopped
+    networks:
+      - pe-network
+
+networks:
+  pe-network:
+    driver: bridge
+
+volumes:
+  keycloak_data:
+    driver: local
