@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Initialize Keycloak on application mount
   useEffect(() => {
-    let refreshTimer: NodeJS.Timeout | null = null;
+    let refreshTimer: ReturnType<typeof setInterval> | null = null;
 
     keycloak
       .init({

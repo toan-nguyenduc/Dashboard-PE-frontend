@@ -43,7 +43,11 @@ const mockVideos: Video[] = Array.from({ length: 328 }, (_, index) => {
     needEncryption: index % 3 === 0,
     resourceId: index % 3 === 0 ? `DRM_VIETTEL_ASSET_${id}` : null,
     isVmafEvaluated: index % 2 === 0,
-    convertServer: `enc-worker-pod-${(index % 8) + 1}`,
+    convertServer: (index % 8) + 1,
+    filePath: null,
+    convertImages: null,
+    convertStartTime: null,
+    convertEndTime: null,
     createdAt: new Date(Date.now() - index * 3600000).toISOString(),
     modifiedAt: new Date(Date.now() - (index * 1800000) % 86400000).toISOString(),
   };
@@ -102,6 +106,7 @@ export const videoService = {
         size,
         totalElements,
         totalPages,
+        first: page === 0,
         last: page >= totalPages - 1,
       };
     }

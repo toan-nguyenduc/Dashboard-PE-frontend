@@ -30,7 +30,6 @@ const videoEditSchema = z.object({
   fileType: z.number().int().optional(),
   needEncryption: z.boolean().optional(),
   resourceId: z.string().optional(),
-  convertServer: z.string().optional(),
   originalPath: z.string().optional(),
   metaInfo: z.string().optional(),
 });
@@ -66,7 +65,6 @@ export function VideoEditModal({
       fileType: 1,
       needEncryption: false,
       resourceId: '',
-      convertServer: '',
       originalPath: '',
       metaInfo: '',
     },
@@ -85,7 +83,6 @@ export function VideoEditModal({
         fileType: video.fileType ?? 1,
         needEncryption: video.needEncryption ?? false,
         resourceId: video.resourceId || '',
-        convertServer: video.convertServer || '',
         originalPath: video.originalPath || '',
         metaInfo: video.metaInfo || '',
       });

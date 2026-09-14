@@ -19,6 +19,8 @@ const mockMediaList: CsmMedia[] = Array.from({ length: 3798 }, (_, index) => {
     id,
     name: `Phim Hành Động Chiếu Rạp 2026 - Tập ${(index % 24) + 1} [Bản Gốc 4K Master]`,
     slug: `phim-hanh-dong-tap-${(index % 24) + 1}`,
+    shortDesc: null,
+    description: null,
     originalPath: `storage/nas/csm/media/2026/phim_hd_${id}_master.mp4`,
     convertPath: convertStatus === 1 ? `s3://viettel-ott-output/csm/${id}/manifest.m3u8` : null,
     audioPath: `/pe/audio/${id}.m4a`,
@@ -38,6 +40,8 @@ const mockMediaList: CsmMedia[] = Array.from({ length: 3798 }, (_, index) => {
     metaInfo: `{"aspect_ratio": "16:9", "fps": 29.97}`,
     createdAt: new Date(Date.now() - index * 7200000).toISOString(),
     updatedAt: new Date(Date.now() - (index * 3600000) % 86400000).toISOString(),
+    convertStartTime: null,
+    convertEndTime: null,
     linkedVideoId,
     linkedVideoStatus: hasLinkedVideo ? (convertStatus === 1 ? 71 : convertStatus === 100 ? 0 : convertStatus - 1) : null,
     linkedVideoStatusDescription: hasLinkedVideo 
@@ -93,6 +97,7 @@ export const csmMediaService = {
         size,
         totalElements,
         totalPages,
+        first: page === 0,
         last: page >= totalPages - 1,
       };
     }
@@ -137,11 +142,13 @@ export const csmMediaService = {
       }
       return {
         csmMediaId: id,
+        mediaName: item?.name ?? `Media ${id}`,
         convertStatus: 100,
         originUploadStatus: 1,
-        linkedVideoId: item?.linkedVideoId ?? 999,
-        linkedVideoStatus: 0,
+        videoId: item?.linkedVideoId ?? 999,
+        videoStatus: 0,
         message: 'Re-encode triggered successfully (mock)',
+        triggeredAt: new Date().toISOString(),
       };
     }
   },
