@@ -2,7 +2,8 @@
  * API configuration — all endpoints centralized here.
  * Base URL sourced from environment variable.
  */
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || 'https://relenting-quickly-overbuilt.ngrok-free.dev/api';
 
 export const API_CONFIG = {
   baseUrl: API_BASE_URL,
