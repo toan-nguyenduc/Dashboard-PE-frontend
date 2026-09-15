@@ -171,6 +171,26 @@ main {
   background: hsl(var(--muted)) !important;
 }
 
+.video-data-table .ant-table-tbody > tr > td {
+  height: 3.5rem;
+  max-height: 3.5rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.video-data-table .ant-table-tbody > tr > td > * {
+  max-width: 100%;
+}
+
+.video-data-table .ant-table-container,
+.video-data-table .ant-table-content,
+.video-data-table .ant-table-content > table {
+  min-height: 35rem;
+}
+
 .video-data-table .ant-table-tbody > tr.video-data-row:hover > td.video-action-cell,
 .video-data-table .ant-table-tbody > tr > td.video-action-cell,
 .video-data-table .ant-table-thead > tr > th.video-action-header {
