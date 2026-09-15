@@ -133,10 +133,10 @@ export function VideoTable({
         const csmId = record.csmMediaId;
         return (
           <div className="flex flex-col gap-0.5 max-w-[280px]">
-            <span className="text-[14px] font-[600] text-[#2f3e46] truncate" title={title || "Không có tên"}>
+            <span className="text-[14px] font-[600] text-foreground truncate" title={title || "Không có tên"}>
               {title || `Video #${record.id}`}
             </span>
-            <span className="text-[12px] text-[#6c757d] font-mono flex items-center">
+            <span className="text-[12px] text-muted-foreground font-mono flex items-center">
               CSM ID: {csmId} <CopyBtn value={String(csmId)} label="CSM ID" />
             </span>
           </div>
@@ -228,8 +228,8 @@ export function VideoTable({
       key: "actions",
       width: 250,
       fixed: 'right',
-      onHeaderCell: () => ({ className: "bg-card text-left text-sm font-semibold shadow-[-6px_0_12px_-12px_rgba(15,23,42,0.45)]" }),
-      onCell: () => ({ className: "bg-card border-l border-border/60 shadow-[-6px_0_12px_-12px_rgba(15,23,42,0.35)]" }),
+      onHeaderCell: () => ({ className: "video-action-header" }),
+      onCell: () => ({ className: "video-action-cell" }),
       render: (_, record) => {
         const canRunReconvert = canReconvert(record.status);
         const isSuccess = isFullSuccess(record.status);
@@ -289,7 +289,7 @@ export function VideoTable({
         scroll={{ x: 1650 }}
         size="middle"
         className="video-data-table"
-        rowClassName="hover:bg-muted/40 transition-colors"
+        rowClassName="video-data-row transition-colors"
       />
     </div>
   );
