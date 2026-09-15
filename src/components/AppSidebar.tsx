@@ -72,10 +72,10 @@ export function AppSidebar({ collapsed, setCollapsed, toggled, setToggled, isMob
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 min-h-[64px] border-b border-border/50">
+        <div className="flex items-center justify-between px-4 py-3.5 min-h-[68px] border-b border-border/60">
           {!collapsed && (
             <div className="flex items-center gap-2 select-none overflow-hidden font-inter">
-              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-black text-sm shadow-md shrink-0">
+              <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-black text-sm shadow-sm shrink-0">
                 PE
               </div>
               <span className="font-bold tracking-tight text-base whitespace-nowrap">

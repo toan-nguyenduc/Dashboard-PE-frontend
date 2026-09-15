@@ -86,17 +86,20 @@ export function VideoListPage() {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-5">
+    <div className="space-y-5 sm:space-y-6">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+        <div>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary/80">Video operations</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-[32px] sm:leading-tight">
           Giám sát Video Transcode
-        </h1>
+          </h1>
+        </div>
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
           <RangePicker 
             presets={rangePresets} 
             onChange={handleTimeRangeChange}
-            className="w-full sm:w-72 shadow-sm rounded-lg" 
+            className="w-full sm:w-[292px] shadow-xs rounded-lg"
             placeholder={["Từ ngày", "Đến ngày"]}
           />
           <Button 
@@ -116,7 +119,7 @@ export function VideoListPage() {
         <Card
           onClick={() => setFilters({ statusGroup: "all", status: undefined })}
           className={cn(
-            "p-4 sm:p-5 cursor-pointer hover:border-primary/50 transition-all shadow-xs",
+            "min-h-[126px] p-4 sm:p-5 cursor-pointer hover:border-primary/50 transition-all shadow-xs rounded-xl",
             filters.statusGroup === "all" && "border-primary ring-1 ring-primary/20"
           )}
         >
@@ -132,7 +135,7 @@ export function VideoListPage() {
         <Card
           onClick={() => setFilters({ statusGroup: "processing", status: undefined })}
           className={cn(
-            "p-4 sm:p-5 cursor-pointer hover:border-blue-500/50 transition-all shadow-xs bg-blue-500/5 border-blue-500/20",
+            "min-h-[126px] p-4 sm:p-5 cursor-pointer hover:border-blue-500/50 transition-all shadow-xs rounded-xl bg-blue-500/5 border-blue-500/20",
             filters.statusGroup === "processing" && "border-blue-500 ring-1 ring-blue-500/30"
           )}
         >
@@ -149,7 +152,7 @@ export function VideoListPage() {
         <Card
           onClick={() => setFilters({ statusGroup: "failed", status: undefined })}
           className={cn(
-            "p-4 sm:p-5 cursor-pointer hover:border-red-500/50 transition-all shadow-xs bg-red-500/5 border-red-500/20",
+            "min-h-[126px] p-4 sm:p-5 cursor-pointer hover:border-red-500/50 transition-all shadow-xs rounded-xl bg-red-500/5 border-red-500/20",
             filters.statusGroup === "failed" && "border-red-500 ring-1 ring-red-500/30"
           )}
         >
@@ -166,7 +169,7 @@ export function VideoListPage() {
         <Card
           onClick={() => setFilters({ statusGroup: "success", status: undefined })}
           className={cn(
-            "p-4 sm:p-5 cursor-pointer hover:border-emerald-500/50 transition-all shadow-xs bg-emerald-500/5 border-emerald-500/20",
+            "min-h-[126px] p-4 sm:p-5 cursor-pointer hover:border-emerald-500/50 transition-all shadow-xs rounded-xl bg-emerald-500/5 border-emerald-500/20",
             filters.statusGroup === "success" && "border-emerald-500 ring-1 ring-emerald-500/30"
           )}
         >
@@ -181,14 +184,14 @@ export function VideoListPage() {
       </div>
 
       {/* Table Controls (Search) */}
-      <div className="flex justify-between items-center bg-card p-3 rounded-t-xl border border-border border-b-0">
+      <div className="flex justify-between items-center bg-card p-3.5 rounded-xl border border-border shadow-xs">
         <Input
           placeholder="Tìm theo tên video, ID, CSM ID..."
           prefix={<Search size={16} className="text-muted-foreground mr-2" />}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onPressEnter={handleSearchSubmit}
-          className="max-w-md shadow-sm"
+          className="h-11 w-full max-w-2xl shadow-none rounded-lg"
           allowClear
         />
         {/* Additional filters can be placed here if needed */}
