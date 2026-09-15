@@ -1,12 +1,11 @@
 import { useMemo, useState } from "react";
-import { Table, Dropdown, Tooltip, Tag } from "antd";
-import type { MenuProps } from "antd";
+import { Table, Tooltip, Tag } from "antd";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
 import type { FilterValue, SorterResult } from "antd/es/table/interface";
 import dayjs from "dayjs";
 import { APP_CONFIG } from "@/config/app.config";
 import type { CsmMedia } from "@/types/csm-media.types";
-import { MoreVertical, Eye, RefreshCw, Check, Copy } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 import { TableSkeleton } from "@/components/TableSkeleton";
 
 interface CsmMediaTableProps {
@@ -182,35 +181,28 @@ export function CsmMediaTable({
       render: (val) => <span className="text-sm text-muted-foreground">{formatDate(val)}</span>
     },
     {
-      title: "",
+      title: "Thao tác",
       key: "actions",
-      width: 60,
+      width: 190,
       fixed: 'right',
-      render: (_, record) => {
-        const items: MenuProps['items'] = [
-          {
-            key: 'view',
-            icon: <Eye size={16} />,
-            label: 'Xem chi tiết',
-            onClick: () => onViewDetail(record)
-          },
-          { type: 'divider' },
-          {
-            key: 'reencode',
-            icon: <RefreshCw size={16} />,
-            label: 'Re-encode',
-            onClick: () => onReEncode(record)
-          }
-        ];
-
-        return (
-          <Dropdown menu={{ items }} trigger={['click']} placement="bottomRight">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted cursor-pointer text-muted-foreground">
-              <MoreVertical size={16} />
-            </span>
-          </Dropdown>
-        );
-      }
+      render: (_, record) => (
+        <div className="flex items-center gap-1.5 whitespace-nowrap">
+          <button
+            type="button"
+            onClick={() => onViewDetail(record)}
+            className="rounded-md px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
+          >
+            Xem
+          </button>
+          <button
+            type="button"
+            onClick={() => onReEncode(record)}
+            className="rounded-md px-2 py-1 text-xs font-medium text-amber-700 hover:bg-amber-500/10 transition-colors"
+          >
+            Re-encode
+          </button>
+        </div>
+      )
     }
   ], [onViewDetail, onReEncode]);
 

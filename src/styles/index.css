@@ -76,41 +76,31 @@
 }
 
 .dark {
-  /* Material UI Dark Theme palette */
-  --background: 0 0% 7.1%; /* #121212 */
-  --foreground: 0 0% 95%; /* rgba(255,255,255,0.87) */
-  
-  --card: 0 0% 11.8%; /* #1e1e1e */
-  --card-foreground: 0 0% 95%;
-  
-  --popover: 0 0% 11.8%; /* #1e1e1e */
-  --popover-foreground: 0 0% 95%;
-  
-  --primary: 207 90% 77%; /* #90caf9 - Material UI Dark Primary */
-  --primary-foreground: 0 0% 7.1%;
-  
-  --secondary: 0 0% 16%; /* #292929 */
-  --secondary-foreground: 0 0% 95%;
-  
-  --muted: 0 0% 16%; /* #292929 */
-  --muted-foreground: 0 0% 70%; /* rgba(255,255,255,0.7) */
-  
-  --accent: 0 0% 18%; /* #2e2e2e */
-  --accent-foreground: 0 0% 95%;
-  
-  --destructive: 4 90% 58%; /* #f44336 */
+  --background: 222 22% 10%;
+  --foreground: 210 20% 94%;
+  --card: 222 20% 14%;
+  --card-foreground: 210 20% 94%;
+  --popover: 222 20% 16%;
+  --popover-foreground: 210 20% 94%;
+  --primary: 214 92% 68%;
+  --primary-foreground: 222 25% 10%;
+  --secondary: 222 17% 19%;
+  --secondary-foreground: 210 20% 92%;
+  --muted: 222 17% 18%;
+  --muted-foreground: 215 13% 68%;
+  --accent: 222 17% 22%;
+  --accent-foreground: 210 20% 94%;
+  --destructive: 0 72% 62%;
   --destructive-foreground: 0 0% 100%;
-  
-  --border: 0 0% 20%; /* #333333 - MUI divider */
-  --input: 0 0% 20%;
-  --ring: 207 90% 77%;
-
-  --success: 123 40% 57%; /* #66bb6a */
+  --border: 222 15% 25%;
+  --input: 222 15% 25%;
+  --ring: 214 92% 68%;
+  --success: 145 55% 48%;
   --success-foreground: 0 0% 100%;
-  --warning: 36 100% 57%; /* #ffa726 */
-  --warning-foreground: 0 0% 100%;
-  --processing: 207 90% 77%;
-  --processing-foreground: 0 0% 7.1%;
+  --warning: 32 88% 58%;
+  --warning-foreground: 222 25% 10%;
+  --processing: 214 92% 68%;
+  --processing-foreground: 222 25% 10%;
 }
 
 * {
@@ -120,7 +110,7 @@
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);
-  font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   min-height: 100vh;
   margin: 0;
   -webkit-font-smoothing: antialiased;
@@ -147,9 +137,6 @@ main {
   font-family: 'Inter', sans-serif;
 }
 
-.font-roboto {
-  font-family: 'Roboto', sans-serif;
-}
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
@@ -168,4 +155,169 @@ main {
 
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground) / 0.5);
+}
+
+.video-data-table .ant-table-thead > tr > th,
+.video-data-table .ant-table-tbody > tr > td {
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--border));
+}
+
+.video-data-table .ant-table-tbody > tr.video-data-row:hover > td {
+  background: hsl(var(--muted)) !important;
+}
+
+.video-data-table .ant-table-tbody > tr > td {
+  height: 3.5rem;
+  max-height: 3.5rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.video-data-table .ant-table-tbody > tr > td > * {
+  max-width: 100%;
+}
+
+.video-data-table .ant-table-container,
+.video-data-table .ant-table-content,
+.video-data-table .ant-table-content > table {
+  min-height: 35rem;
+}
+
+.video-data-table .ant-table-tbody > tr.video-data-row:hover > td.video-action-cell,
+.video-data-table .ant-table-tbody > tr > td.video-action-cell,
+.video-data-table .ant-table-thead > tr > th.video-action-header {
+  position: sticky !important;
+  right: 0;
+  z-index: 3;
+  background: hsl(var(--card)) !important;
+  border-left: 1px solid hsl(var(--border));
+  box-shadow: -10px 0 18px -16px hsl(222 25% 4% / 0.9);
+}
+
+.video-data-table .ant-table-thead > tr > th.video-action-header {
+  z-index: 5;
+  text-align: left;
+}
+
+.video-data-table .ant-pagination.video-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 0.75rem;
+  min-height: 5.5rem;
+  padding: 1rem 1.5rem;
+  margin: 0 !important;
+  background: hsl(var(--card));
+  border-top: 1px solid hsl(var(--border));
+  border-radius: 0 0 1rem 1rem;
+}
+
+.video-data-table .ant-pagination-total-text,
+.video-data-table .ant-pagination-options {
+  display: none !important;
+}
+
+.video-data-table .ant-pagination-item,
+.video-data-table .ant-pagination-prev,
+.video-data-table .ant-pagination-next {
+  margin: 0;
+}
+
+.video-data-table .ant-pagination-list {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 4rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 999px;
+  background: hsl(var(--muted) / 0.3);
+  box-shadow: 0 8px 18px hsl(222 25% 4% / 0.12);
+}
+
+.video-data-table .ant-pagination-item,
+.video-data-table .ant-pagination-prev,
+.video-data-table .ant-pagination-next,
+.video-data-table .ant-pagination-prev button,
+.video-data-table .ant-pagination-next button,
+.video-data-table .ant-select-selector {
+  min-width: 2.25rem;
+  height: 2.25rem !important;
+  border-radius: 0.5rem !important;
+  border-color: hsl(var(--border)) !important;
+  background: hsl(var(--card)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.video-data-table .ant-pagination-item a,
+.video-data-table .ant-pagination-prev button,
+.video-data-table .ant-pagination-next button {
+  color: hsl(var(--muted-foreground));
+}
+
+.video-data-table .ant-pagination-item,
+.video-data-table .ant-pagination-prev,
+.video-data-table .ant-pagination-next {
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.video-data-table .ant-pagination-item:hover,
+.video-data-table .ant-pagination-prev:hover,
+.video-data-table .ant-pagination-next:hover {
+  border-color: hsl(var(--primary) / 0.65) !important;
+  background: hsl(var(--primary) / 0.08) !important;
+}
+
+.video-data-table .ant-pagination-item:focus-visible,
+.video-data-table .ant-pagination-prev:focus-visible,
+.video-data-table .ant-pagination-next:focus-visible,
+.video-data-table .ant-pagination-item a:focus-visible,
+.video-data-table .ant-pagination-prev button:focus-visible,
+.video-data-table .ant-pagination-next button:focus-visible,
+.video-data-table .ant-select-selector:focus-within {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+.video-data-table .ant-pagination-item-active {
+  width: 3.5rem;
+  height: 3.5rem !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-color: hsl(var(--primary)) !important;
+  border-radius: 999px !important;
+  background: hsl(var(--primary) / 0.72) !important;
+  box-shadow: 0 5px 12px hsl(var(--primary) / 0.25);
+}
+
+.video-data-table .ant-pagination-item-active a {
+  color: hsl(var(--primary));
+  font-weight: 600;
+}
+
+.video-data-table .ant-pagination-disabled button {
+  color: hsl(var(--muted-foreground) / 0.4) !important;
+  background: hsl(var(--muted) / 0.45) !important;
+}
+
+.video-data-table .ant-pagination-options {
+  margin-left: 0.25rem;
+}
+
+@media (max-width: 640px) {
+  .video-data-table .ant-pagination-total-text {
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .video-data-table .ant-pagination.video-pagination {
+    justify-content: flex-end;
+  }
 }

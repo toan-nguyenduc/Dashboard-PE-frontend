@@ -6,7 +6,7 @@ export const getAntdTheme = (isDark: boolean): ThemeConfig => {
     algorithm: isDark ? theme.darkAlgorithm : theme.defaultAlgorithm,
     token: {
       colorPrimary: '#90caf9', // primary color matching Material UI dark palette
-      fontFamily: 'Inter, Roboto, sans-serif',
+      fontFamily: 'Inter, sans-serif',
       borderRadius: 8,
       colorBgContainer: isDark ? '#1e1e1e' : '#ffffff',
       colorBgElevated: isDark ? '#1e1e1e' : '#ffffff',

@@ -178,7 +178,7 @@ export function UserProfileDialog({
                 <span className="text-sm font-bold text-foreground truncate font-inter">
                   {name || username || 'Admin'}
                 </span>
-                <span className="text-xs text-muted-foreground font-roboto truncate">
+                <span className="text-xs text-muted-foreground font-inter truncate">
                   {email || 'admin@viettel.vn'}
                 </span>
                 <div className="flex items-center gap-1.5 mt-1">

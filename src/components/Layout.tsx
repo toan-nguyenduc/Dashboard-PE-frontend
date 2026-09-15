@@ -44,7 +44,7 @@ export function Layout() {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto bg-background p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto bg-background p-4 sm:p-6 lg:p-8 xl:px-10">
           <div className="max-w-[1800px] mx-auto h-full">
             <Outlet />
           </div>

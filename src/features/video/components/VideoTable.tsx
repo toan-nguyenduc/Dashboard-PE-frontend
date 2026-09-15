@@ -1,14 +1,12 @@
 import { useMemo, useState } from "react";
-import { Table, Dropdown, Tooltip } from "antd";
-import type { MenuProps } from "antd";
+import { Table, Tooltip } from "antd";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
 import type { FilterValue, SorterResult } from "antd/es/table/interface";
 import dayjs from "dayjs";
 import { StatusTag } from "./StatusTag";
-import { canReconvert, isFullSuccess } from "@/config/status.config";
-import { APP_CONFIG } from "@/config/app.config";
+import { canReconvert } from "@/config/status.config";
 import type { Video } from "@/types/video.types";
-import { MoreVertical, Eye, Edit, RefreshCw, Check, Copy } from "lucide-react";
+import { Check, Copy, ChevronLeft, ChevronRight } from "lucide-react";
 import { TableSkeleton } from "@/components/TableSkeleton";
 
 interface VideoTableProps {
@@ -72,7 +70,9 @@ function CopyBtn({ value, label }: { value: string; label: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <Tooltip title={`Copy ${label}`}>
-      <span
+      <button
+        type="button"
+        aria-label={`Copy ${label}`}
         onClick={(e) => {
           e.stopPropagation();
           navigator.clipboard.writeText(value);
@@ -82,7 +82,7 @@ function CopyBtn({ value, label }: { value: string; label: string }) {
         className="ml-1.5 inline-flex items-center justify-center rounded text-muted-foreground hover:text-primary transition-colors cursor-pointer"
       >
         {copied ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
-      </span>
+      </button>
     </Tooltip>
   );
 }
@@ -126,15 +126,17 @@ export function VideoTable({
       title: "Tên video",
       key: "title",
       width: 280,
+      sorter: true,
+      onHeaderCell: () => ({ className: "text-left text-sm font-semibold" }),
       render: (_, record) => {
         const title = extractTitle(record.metaInfo);
         const csmId = record.csmMediaId;
         return (
           <div className="flex flex-col gap-0.5 max-w-[280px]">
-            <span className="text-[14px] font-[600] text-[#2f3e46] truncate" title={title || "Không có tên"}>
+            <span className="text-[14px] font-[600] text-foreground truncate" title={title || "Không có tên"}>
               {title || `Video #${record.id}`}
             </span>
-            <span className="text-[12px] text-[#6c757d] font-mono flex items-center">
+            <span className="text-[12px] text-muted-foreground font-mono flex items-center">
               CSM ID: {csmId} <CopyBtn value={String(csmId)} label="CSM ID" />
             </span>
           </div>
@@ -145,6 +147,8 @@ export function VideoTable({
       title: "Original Path",
       key: "originalPath",
       width: 220,
+      sorter: true,
+      onHeaderCell: () => ({ className: "text-left text-sm font-semibold" }),
       render: (_, record) => {
         const full = parsePathStr(record.originalPath);
         if (!full) return null;
@@ -166,6 +170,7 @@ export function VideoTable({
       title: "Nguồn video",
       key: "source",
       width: 120,
+      sorter: true,
       render: (_, record) => {
         const csmId = record.csmMediaId;
         if (csmId === 0) return <span className="text-violet-600 font-medium text-sm">FastChannel</span>;
@@ -178,6 +183,7 @@ export function VideoTable({
       dataIndex: "resolution",
       key: "resolution",
       width: 100,
+      sorter: true,
       render: (val) => <span className="text-sm font-medium">{cleanVal(val)}</span>
     },
     {
@@ -205,7 +211,7 @@ export function VideoTable({
       render: (val) => <span className="text-sm">{formatDate(val)}</span>
     },
     {
-      title: "Ưu tiên",
+      title: "Độ ưu tiên",
       dataIndex: "priority",
       key: "priority",
       width: 80,
@@ -217,46 +223,44 @@ export function VideoTable({
       dataIndex: "status",
       key: "status",
       width: 200,
+      sorter: true,
+      onHeaderCell: () => ({ className: "text-left text-sm font-semibold" }),
       render: (val) => <StatusTag status={val} />
     },
     {
-      title: "",
+      title: "Thao tác",
       key: "actions",
-      width: 60,
+      width: 250,
       fixed: 'right',
+      onHeaderCell: () => ({ className: "video-action-header" }),
+      onCell: () => ({ className: "video-action-cell" }),
       render: (_, record) => {
-        const _canReconvert = canReconvert(record.status);
-        const _isSuccess = isFullSuccess(record.status);
-        
-        const items: MenuProps['items'] = [
-          {
-            key: 'view',
-            icon: <Eye size={16} />,
-            label: 'Xem chi tiết',
-            onClick: () => onViewDetail(record)
-          },
-          {
-            key: 'edit',
-            icon: <Edit size={16} />,
-            label: 'Chỉnh sửa',
-            onClick: () => onEdit && onEdit(record)
-          },
-          { type: 'divider' },
-          {
-            key: 'reconvert',
-            icon: <RefreshCw size={16} />,
-            label: _isSuccess ? 'Re-encode (CSM)' : 'Re-verify',
-            disabled: !_canReconvert,
-            onClick: () => onReconvert && onReconvert(record)
-          }
-        ];
-
+        const canRunReconvert = canReconvert(record.status);
         return (
-          <Dropdown menu={{ items }} trigger={['click']} placement="bottomRight">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted cursor-pointer text-muted-foreground">
-              <MoreVertical size={16} />
-            </span>
-          </Dropdown>
+          <div className="flex items-center gap-1.5 whitespace-nowrap">
+            <button
+              type="button"
+              onClick={() => onViewDetail(record)}
+              className="rounded-md px-2.5 py-1.5 text-xs font-medium text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 transition-colors"
+            >
+              Xem
+            </button>
+            <button
+              type="button"
+              onClick={() => onEdit?.(record)}
+              className="rounded-md px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 transition-colors"
+            >
+              Sửa
+            </button>
+            <button
+              type="button"
+              disabled={!canRunReconvert}
+              onClick={() => onReconvert?.(record)}
+              className="rounded-md px-2.5 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40 disabled:cursor-not-allowed disabled:opacity-40 transition-colors"
+            >
+              Re-encode
+            </button>
+          </div>
         );
       }
     }
@@ -278,15 +282,31 @@ export function VideoTable({
           current: page + 1,
           pageSize: pageSize,
           total: total,
-          showSizeChanger: true,
-          pageSizeOptions: APP_CONFIG.pagination.pageSizeOptions.map(String),
-          showTotal: (total, range) => `Hiển thị ${range[0]}-${range[1]} / tổng ${total.toLocaleString()}`,
-          position: ['bottomLeft'],
-          className: "px-4 py-3 m-0 border-t border-border/50 bg-muted/20"
+          showSizeChanger: false,
+          position: ['bottomCenter'],
+          itemRender: (_pageNumber, type, originalElement) => {
+            if (type === 'prev') {
+              return (
+                <span aria-label="Trang trước" title="Trang trước" className="inline-flex h-9 w-9 items-center justify-center">
+                  <ChevronLeft size={17} aria-hidden="true" />
+                </span>
+              );
+            }
+            if (type === 'next') {
+              return (
+                <span aria-label="Trang tiếp theo" title="Trang tiếp theo" className="inline-flex h-9 w-9 items-center justify-center">
+                  <ChevronRight size={17} aria-hidden="true" />
+                </span>
+              );
+            }
+            return originalElement;
+          },
+          className: "video-pagination m-0 border-t border-border/50 bg-muted/20"
         }}
-        scroll={{ x: 1400 }}
+        scroll={{ x: 1650 }}
         size="middle"
-        rowClassName="hover:bg-muted/40 transition-colors"
+        className="video-data-table"
+        rowClassName="video-data-row transition-colors"
       />
     </div>
   );
