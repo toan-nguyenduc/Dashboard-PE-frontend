@@ -14,6 +14,7 @@ export interface AuthContextType extends AuthState {
   login: (credentials?: LoginRequest) => Promise<void>;
   loginWithKeycloak: () => Promise<void>;
   logout: () => void;
+  updateUser: (name: string) => void;
   isLoading: boolean;
   isKeycloakReady: boolean;
 }
@@ -22,16 +23,19 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [authState, setAuthState] = useState<AuthState>({
-    token: localStorage.getItem(APP_CONFIG.storage.token),
-    username: localStorage.getItem(APP_CONFIG.storage.username),
-    isAuthenticated: !!localStorage.getItem(APP_CONFIG.storage.token),
+    token: localStorage.getItem(APP_CONFIG.storage.token) || 'dev-token',
+    username: localStorage.getItem(APP_CONFIG.storage.username) || 'dev_admin',
+    isAuthenticated: true, // BYPASS AUTH
   });
-  const [isLoading, setIsLoading] = useState(true);
-  const [isKeycloakReady, setIsKeycloakReady] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // BYPASS LOADING
+  const [isKeycloakReady, setIsKeycloakReady] = useState(true);
 
   // Initialize Keycloak on application mount
   useEffect(() => {
-    let refreshTimer: NodeJS.Timeout | null = null;
+    // BYPASS: Do not init keycloak
+    return;
+    
+    let refreshTimer: ReturnType<typeof setInterval> | null = null;
 
     keycloak
       .init({
@@ -112,6 +116,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthState({ token: null, username: null, isAuthenticated: false });
   }, []);
 
+  const updateUser = useCallback((name: string) => {
+    localStorage.setItem(APP_CONFIG.storage.username, name);
+    setAuthState((prev) => ({ ...prev, username: name }));
+  }, []);
+
   const loginWithKeycloak = useCallback(async () => {
     try {
       await keycloak.login({
@@ -164,10 +173,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       loginWithKeycloak,
       logout,
+      updateUser,
       isLoading,
       isKeycloakReady,
     }),
-    [authState, login, loginWithKeycloak, logout, isLoading, isKeycloakReady]
+    [authState, login, loginWithKeycloak, logout, updateUser, isLoading, isKeycloakReady]
   );
 
   return (

@@ -76,41 +76,41 @@
 }
 
 .dark {
-  /* Deep, sleek high-contrast dark theme */
-  --background: 224 71% 4%;
-  --foreground: 210 40% 98%;
+  /* Material UI Dark Theme palette */
+  --background: 0 0% 7.1%; /* #121212 */
+  --foreground: 0 0% 95%; /* rgba(255,255,255,0.87) */
   
-  --card: 224 71% 7%;
-  --card-foreground: 210 40% 98%;
+  --card: 0 0% 11.8%; /* #1e1e1e */
+  --card-foreground: 0 0% 95%;
   
-  --popover: 224 71% 7%;
-  --popover-foreground: 210 40% 98%;
+  --popover: 0 0% 11.8%; /* #1e1e1e */
+  --popover-foreground: 0 0% 95%;
   
-  --primary: 217.2 91.2% 59.8%;
-  --primary-foreground: 222.2 47.4% 11.2%;
+  --primary: 207 90% 77%; /* #90caf9 - Material UI Dark Primary */
+  --primary-foreground: 0 0% 7.1%;
   
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
+  --secondary: 0 0% 16%; /* #292929 */
+  --secondary-foreground: 0 0% 95%;
   
-  --muted: 217.2 32.6% 14%;
-  --muted-foreground: 215 20.2% 65.1%;
+  --muted: 0 0% 16%; /* #292929 */
+  --muted-foreground: 0 0% 70%; /* rgba(255,255,255,0.7) */
   
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
+  --accent: 0 0% 18%; /* #2e2e2e */
+  --accent-foreground: 0 0% 95%;
   
-  --destructive: 0 62.8% 45%;
-  --destructive-foreground: 210 40% 98%;
+  --destructive: 4 90% 58%; /* #f44336 */
+  --destructive-foreground: 0 0% 100%;
   
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 224.3 76.3% 48%;
+  --border: 0 0% 20%; /* #333333 - MUI divider */
+  --input: 0 0% 20%;
+  --ring: 207 90% 77%;
 
-  --success: 142 70% 45%;
+  --success: 123 40% 57%; /* #66bb6a */
   --success-foreground: 0 0% 100%;
-  --warning: 38 92% 50%;
+  --warning: 36 100% 57%; /* #ffa726 */
   --warning-foreground: 0 0% 100%;
-  --processing: 217.2 91.2% 59.8%;
-  --processing-foreground: 0 0% 100%;
+  --processing: 207 90% 77%;
+  --processing-foreground: 0 0% 7.1%;
 }
 
 * {
@@ -120,11 +120,35 @@
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   min-height: 100vh;
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body,
+#root,
+.bg-background,
+.bg-card,
+.bg-popover,
+.bg-muted,
+.ps-sidebar-container,
+.ps-sidebar-root,
+header,
+main {
+  transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.font-inter {
+  font-family: 'Inter', sans-serif;
+}
+
+.font-roboto {
+  font-family: 'Roboto', sans-serif;
 }
 
 /* Custom scrollbar */

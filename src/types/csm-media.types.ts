@@ -27,6 +27,7 @@ export interface CsmMedia {
   audioPath: string | null;
   subtitlePath: string | null;
   originUploadStatus: number | null;
+  aiReviewStatus: number | null;
   createdAt: string | null;
   updatedAt: string | null;
 
@@ -45,6 +46,7 @@ export interface CsmMediaFilterParams {
   originUploadStatus?: number;
   sortBy?: string;
   sortDir?: 'asc' | 'desc';
+  timeRange?: 'today' | '7d' | '30d' | 'all' | string;
 }
 
 export interface ReEncodeRequest {

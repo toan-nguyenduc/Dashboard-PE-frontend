@@ -1,408 +1,245 @@
-import { useState, useMemo } from 'react';
-import {
-  useReactTable,
-  getCoreRowModel,
-  flexRender,
-  type ColumnDef,
-} from '@tanstack/react-table';
-import dayjs from 'dayjs';
-import { APP_CONFIG } from '@/config/app.config';
-import type { CsmMedia } from '@/types/csm-media.types';
-import { Button } from '@/components/ui/button';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { cn } from '@/lib/utils';
+import { useMemo, useState } from "react";
+import { Table, Dropdown, Tooltip, Tag } from "antd";
+import type { MenuProps } from "antd";
+import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
+import type { FilterValue, SorterResult } from "antd/es/table/interface";
+import dayjs from "dayjs";
+import { APP_CONFIG } from "@/config/app.config";
+import type { CsmMedia } from "@/types/csm-media.types";
+import { MoreVertical, Eye, RefreshCw, Check, Copy } from "lucide-react";
+import { TableSkeleton } from "@/components/TableSkeleton";
 
 interface CsmMediaTableProps {
   mediaList: CsmMedia[];
-  loading: boolean;
   total: number;
   page: number;
   pageSize: number;
+  loading: boolean;
   onPageChange: (page: number, pageSize: number) => void;
+  onSortChange?: (sortBy: string, sortDir: "asc" | "desc") => void;
   onViewDetail: (media: CsmMedia) => void;
   onReEncode: (media: CsmMedia) => void;
-  onColumnFilterApply?: (filters: { convertStatus?: number }) => void;
+}
+
+function cleanVal(v?: unknown): string {
+  if (v === null || v === undefined) return '';
+  const str = String(v).trim();
+  if (['None', 'none', '—', '-', '_', 'null', 'undefined'].includes(str)) return '';
+  return str;
+}
+
+function formatDuration(seconds?: number | null): string {
+  if (!seconds) return "";
+  return `${seconds}s`;
+}
+
+function formatDate(isoString: string | null): string {
+  const clean = cleanVal(isoString);
+  if (!clean) return "";
+  return dayjs(clean).format("DD/MM/YYYY HH:mm:ss");
+}
+
+function CopyBtn({ value, label }: { value: string; label: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <Tooltip title={`Copy ${label}`}>
+      <span
+        onClick={(e) => {
+          e.stopPropagation();
+          navigator.clipboard.writeText(value);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        }}
+        className="ml-1.5 inline-flex items-center justify-center rounded text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+      >
+        {copied ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
+      </span>
+    </Tooltip>
+  );
+}
+
+function ConvertStatusTag({ status }: { status: number | null }) {
+  if (status === null || status === undefined) return <span className="text-muted-foreground">-</span>;
+  if (status === 1) return <Tag color="success">Thành công (1)</Tag>;
+  if (status === 100) return <Tag color="warning">Chờ convert (100)</Tag>;
+  return <Tag color="error">Lỗi ({status})</Tag>;
 }
 
 export function CsmMediaTable({
   mediaList,
-  loading,
   total,
   page,
   pageSize,
+  loading,
   onPageChange,
+  onSortChange,
   onViewDetail,
   onReEncode,
-  onColumnFilterApply,
 }: CsmMediaTableProps) {
-  const [convertStatusFilter, setConvertStatusFilter] = useState<string>('all');
-
-  const formatDuration = (seconds?: number | null) => {
-    if (!seconds) return '—';
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}m ${secs}s`;
-  };
-
-  const getConvertStatusBadge = (status: number | null) => {
-    switch (status) {
-      case 100:
-        return (
-          <span className="inline-flex items-center gap-1.5 text-xs text-blue-700 dark:text-blue-400 font-semibold">
-            <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
-            Chờ convert (100)
-          </span>
-        );
-      case 1:
-        return (
-          <span className="inline-flex items-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-400 font-semibold">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            Convert xong (1)
-          </span>
-        );
-      case 24:
-      case 34:
-      case 44:
-      case 54:
-      case 64:
-      case 74:
-        return (
-          <span className="inline-flex items-center gap-1.5 text-xs text-red-700 dark:text-red-400 font-semibold">
-            <span className="h-2 w-2 rounded-full bg-red-500" />
-            Lỗi bước {Math.floor(status / 10)} ({status})
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="h-2 w-2 rounded-full bg-slate-400" />
-            {status !== null ? `Status ${status}` : '—'}
-          </span>
-        );
+  
+  const handleTableChange = (
+    pagination: TablePaginationConfig,
+    _filters: Record<string, FilterValue | null>,
+    sorter: SorterResult<CsmMedia> | SorterResult<CsmMedia>[]
+  ) => {
+    if (pagination.current && pagination.pageSize) {
+      onPageChange(pagination.current - 1, pagination.pageSize);
+    }
+    if (onSortChange && !Array.isArray(sorter) && sorter.columnKey) {
+      if (sorter.order) {
+        onSortChange(sorter.columnKey as string, sorter.order === 'ascend' ? 'asc' : 'desc');
+      } else {
+        onSortChange('id', 'desc');
+      }
     }
   };
 
-  const totalPages = Math.ceil(total / pageSize) || 1;
-
-  const columns = useMemo<ColumnDef<CsmMedia>[]>(
-    () => [
-      {
-        accessorKey: 'id',
-        header: 'CSM ID',
-        size: 90,
-        cell: ({ getValue }) => (
-          <span className="font-mono font-bold text-primary">
-            #{getValue<number>()}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'name',
-        header: 'Tên Media',
-        size: 240,
-        cell: ({ getValue }) => {
-          const name = getValue<string>();
-          return (
-            <div className="max-w-[240px] truncate text-xs font-semibold text-foreground" title={name}>
-              {name || '—'}
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: 'originalPath',
-        header: 'Đường dẫn file gốc',
-        cell: ({ getValue }) => {
-          const path = getValue<string>();
-          return (
-            <div className="max-w-[280px] truncate text-xs text-muted-foreground font-mono" title={path || undefined}>
-              {path || '—'}
-            </div>
-          );
-        },
-      },
-      {
-        id: 'res_duration',
-        header: 'Độ phân giải / Thời lượng',
-        size: 180,
-        cell: ({ row }) => (
-          <div className="flex items-center gap-1.5 text-xs">
-            <span className="font-medium text-foreground">
-              {row.original.resolution || '—'}
+  const columns: ColumnsType<CsmMedia> = useMemo(() => [
+    {
+      title: "Media",
+      key: "name",
+      width: 280,
+      render: (_, record) => {
+        const name = cleanVal(record.name);
+        const slug = cleanVal(record.slug);
+        return (
+          <div className="flex flex-col gap-0.5 max-w-[280px]">
+            <span className="text-[14px] font-[600] text-[#2f3e46] truncate" title={name || "Không có tên"}>
+              {name || `Media #${record.id}`}
             </span>
-            <span className="text-muted-foreground/50">|</span>
-            <span className="text-muted-foreground">
-              {formatDuration(row.original.duration)}
+            <span className="text-[12px] text-[#6c757d] font-mono flex items-center truncate" title={slug}>
+              CSM ID: {record.id} <CopyBtn value={String(record.id)} label="CSM ID" />
             </span>
           </div>
-        ),
-      },
-      {
-        accessorKey: 'convertStatus',
-        header: () => (
-          <div className="flex items-center gap-1.5">
-            <span>Trạng thái Kho (CSM)</span>
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  className={cn(
-                    'h-5 w-5 rounded hover:bg-muted inline-flex items-center justify-center text-[10px] text-muted-foreground hover:text-foreground cursor-pointer transition-colors',
-                    convertStatusFilter !== 'all' && 'text-primary font-bold'
-                  )}
-                  title="Lọc trạng thái CSM"
-                >
-                  ▼
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-60 p-3 space-y-2" align="start">
-                <p className="text-xs font-semibold text-foreground">Lọc theo trạng thái convert</p>
-                <Select
-                  value={convertStatusFilter}
-                  onValueChange={(val) => {
-                    setConvertStatusFilter(val);
-                    if (onColumnFilterApply) {
-                      onColumnFilterApply({
-                        convertStatus: val === 'all' ? undefined : Number(val),
-                      });
-                    }
-                  }}
-                >
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Chọn trạng thái" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả</SelectItem>
-                    <SelectItem value="100">100 — Chờ convert</SelectItem>
-                    <SelectItem value="1">1 — Thành công</SelectItem>
-                    <SelectItem value="24">24 — Download lỗi</SelectItem>
-                    <SelectItem value="34">34 — Verify lỗi</SelectItem>
-                    <SelectItem value="44">44 — Split lỗi</SelectItem>
-                    <SelectItem value="54">54 — Transcode lỗi</SelectItem>
-                    <SelectItem value="64">64 — Package lỗi</SelectItem>
-                    <SelectItem value="74">74 — Upload lỗi</SelectItem>
-                  </SelectContent>
-                </Select>
-              </PopoverContent>
-            </Popover>
-          </div>
-        ),
-        size: 190,
-        cell: ({ getValue }) => getConvertStatusBadge(getValue<number | null>()),
-      },
-      {
-        id: 'linkedVideo',
-        header: 'Video PE liên kết',
-        size: 200,
-        cell: ({ row }) => {
-          const m = row.original;
-          if (!m.linkedVideoId) {
-            return <span className="text-xs text-muted-foreground">Chưa có</span>;
+        );
+      }
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      width: 80,
+      render: (val) => <span className="text-sm font-medium">{val ?? '-'}</span>
+    },
+    {
+      title: "Type",
+      dataIndex: "fileType",
+      key: "fileType",
+      width: 90,
+      render: (val) => {
+        if (val === 1) return <span className="text-sm">NAS</span>;
+        if (val === 2) return <span className="text-sm">S3</span>;
+        return <span className="text-sm text-muted-foreground">{val ?? '-'}</span>;
+      }
+    },
+    {
+      title: "Resolution",
+      dataIndex: "resolution",
+      key: "resolution",
+      width: 100,
+      render: (val) => <span className="text-sm font-medium">{cleanVal(val)}</span>
+    },
+    {
+      title: "Duration",
+      dataIndex: "duration",
+      key: "duration",
+      width: 90,
+      sorter: true,
+      render: (val) => <span className="text-sm font-mono">{formatDuration(val)}</span>
+    },
+    {
+      title: "AI Review",
+      dataIndex: "aiReviewStatus",
+      key: "aiReviewStatus",
+      width: 100,
+      render: (val) => {
+        if (val === 1) return <Tag color="success">Đã duyệt</Tag>;
+        if (val === 0) return <Tag color="default">Chưa duyệt</Tag>;
+        return <span className="text-sm text-muted-foreground">-</span>;
+      }
+    },
+    {
+      title: "Convert Status",
+      dataIndex: "convertStatus",
+      key: "convertStatus",
+      width: 150,
+      render: (val) => <ConvertStatusTag status={val} />
+    },
+    {
+      title: "Published At",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      width: 140,
+      sorter: true,
+      render: (val) => <span className="text-sm text-muted-foreground">{formatDate(val)}</span>
+    },
+    {
+      title: "Updated At",
+      dataIndex: "updatedAt",
+      key: "updatedAt",
+      width: 140,
+      sorter: true,
+      render: (val) => <span className="text-sm text-muted-foreground">{formatDate(val)}</span>
+    },
+    {
+      title: "",
+      key: "actions",
+      width: 60,
+      fixed: 'right',
+      render: (_, record) => {
+        const items: MenuProps['items'] = [
+          {
+            key: 'view',
+            icon: <Eye size={16} />,
+            label: 'Xem chi tiết',
+            onClick: () => onViewDetail(record)
+          },
+          { type: 'divider' },
+          {
+            key: 'reencode',
+            icon: <RefreshCw size={16} />,
+            label: 'Re-encode',
+            onClick: () => onReEncode(record)
           }
+        ];
 
-          const isFailed = m.linkedVideoStatus && [23, 24, 33, 34, 43, 44, 53, 54, 63, 64, 73, 74].includes(m.linkedVideoStatus);
-          const isSuccess = m.linkedVideoStatus && [1, 71].includes(m.linkedVideoStatus);
-
-          return (
-            <div className="flex flex-col text-xs">
-              <span className="font-mono font-semibold text-primary">
-                Video #{m.linkedVideoId}
-              </span>
-              <span
-                className={cn(
-                  'text-[11px] truncate',
-                  isFailed && 'text-red-600 dark:text-red-400 font-medium',
-                  isSuccess && 'text-emerald-600 dark:text-emerald-400 font-medium',
-                  !isFailed && !isSuccess && 'text-blue-600 dark:text-blue-400'
-                )}
-              >
-                {m.linkedVideoStatusDescription || `Status ${m.linkedVideoStatus}`}
-              </span>
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: 'updatedAt',
-        header: 'Cập nhật',
-        size: 130,
-        cell: ({ getValue }) => {
-          const date = getValue<string | null>();
-          return (
-            <span className="text-xs text-muted-foreground font-mono">
-              {date ? dayjs(date).format('YYYY-MM-DD HH:mm') : '—'}
+        return (
+          <Dropdown menu={{ items }} trigger={['click']} placement="bottomRight">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted cursor-pointer text-muted-foreground">
+              <MoreVertical size={16} />
             </span>
-          );
-        },
-      },
-      {
-        id: 'actions',
-        header: 'Thao tác',
-        size: 160,
-        cell: ({ row }) => (
-          <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 px-2 text-xs font-medium text-primary hover:bg-primary/10"
-              onClick={() => onViewDetail(row.original)}
-            >
-              Chi tiết
-            </Button>
-            <Button
-              variant="default"
-              size="sm"
-              className="h-7 px-2 text-xs font-medium"
-              onClick={() => onReEncode(row.original)}
-            >
-              Re-encode
-            </Button>
-          </div>
-        ),
-      },
-    ],
-    [convertStatusFilter, onColumnFilterApply, onViewDetail, onReEncode]
-  );
+          </Dropdown>
+        );
+      }
+    }
+  ], [onViewDetail, onReEncode]);
 
-  const table = useReactTable({
-    data: mediaList,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    manualPagination: true,
-    pageCount: totalPages,
-  });
-
-  const startRecord = total > 0 ? page * pageSize + 1 : 0;
-  const endRecord = Math.min((page + 1) * pageSize, total);
+  if (loading && mediaList.length === 0) {
+    return <TableSkeleton columns={10} rows={10} />;
+  }
 
   return (
-    <div className="bg-card border border-border rounded-xl shadow-xs overflow-hidden">
-      {/* Scrollable Table Container */}
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="hover:bg-transparent">
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    style={{ width: header.column.getSize() }}
-                    className="text-xs font-semibold text-muted-foreground"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground">
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <span className="h-5 w-5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-                    <span className="text-xs">Đang tải danh sách CSM Media...</span>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  onClick={() => onViewDetail(row.original)}
-                  className="cursor-pointer hover:bg-muted/40 transition-colors"
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="py-3">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-28 text-center text-muted-foreground text-xs">
-                  Không tìm thấy media nào trong kho phù hợp với bộ lọc.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Pagination Toolbar */}
-      <div className="p-3 sm:p-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground bg-muted/20">
-        <div>
-          Hiển thị <span className="font-semibold text-foreground">{startRecord}-{endRecord}</span> trên tổng số{' '}
-          <span className="font-semibold text-foreground font-mono">{total.toLocaleString()}</span> media
-        </div>
-
-        <div className="flex items-center gap-2 sm:gap-4">
-          <div className="flex items-center gap-1.5">
-            <span>Hiển thị:</span>
-            <Select
-              value={String(pageSize)}
-              onValueChange={(val) => onPageChange(0, Number(val))}
-            >
-              <SelectTrigger className="h-7 w-20 text-xs">
-                <SelectValue placeholder="Số hàng" />
-              </SelectTrigger>
-              <SelectContent>
-                {APP_CONFIG.pagination.pageSizeOptions.map((sz) => (
-                  <SelectItem key={sz} value={String(sz)}>
-                    {sz} / trang
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 px-2 text-xs"
-              onClick={() => onPageChange(page - 1, pageSize)}
-              disabled={page <= 0 || loading}
-            >
-              ◀ Trước
-            </Button>
-            <span className="px-2 font-mono font-medium text-foreground">
-              {page + 1} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 px-2 text-xs"
-              onClick={() => onPageChange(page + 1, pageSize)}
-              disabled={page >= totalPages - 1 || loading}
-            >
-              Sau ▶
-            </Button>
-          </div>
-        </div>
-      </div>
+    <div className="bg-card border border-border rounded-xl shadow-xs overflow-hidden antd-table-wrapper">
+      <Table
+        columns={columns}
+        dataSource={mediaList}
+        rowKey="id"
+        onChange={handleTableChange}
+        loading={loading}
+        pagination={{
+          current: page + 1,
+          pageSize: pageSize,
+          total: total,
+          showSizeChanger: true,
+          pageSizeOptions: APP_CONFIG.pagination.pageSizeOptions.map(String),
+          showTotal: (total, range) => `Hiển thị ${range[0]}-${range[1]} / tổng ${total.toLocaleString()}`,
+          position: ['bottomLeft'],
+          className: "px-4 py-3 m-0 border-t border-border/50 bg-muted/20"
+        }}
+        scroll={{ x: 1300 }}
+        size="middle"
+        rowClassName="hover:bg-muted/40 transition-colors"
+      />
     </div>
   );
 }

@@ -30,7 +30,7 @@ export interface Video {
   statusDescription: string;
   statusGroup: string;
   isVmafEvaluated: boolean | null;
-  convertServer: number | null;
+  convertServer: string | null;
   createdAt: string;
   modifiedAt: string;
 }
@@ -44,20 +44,35 @@ export interface VideoUpdateRequest {
   metaInfo?: string;
   fileType?: number;
   status?: number;
-  convertServer?: number;
+  convertServer?: string;
 }
 
 export interface VideoStatusUpdateRequest {
   status: number;
 }
 
+/** Global statistics for the entire PE system (not per-page). */
+export interface VideoStats {
+  total: number;
+  processing: number;
+  failed: number;
+  success: number;
+}
+
 export interface VideoFilterParams {
   page?: number;
   size?: number;
+  /** Supports @id:xxx, @csmid:xxx, or plain video title search */
   search?: string;
   status?: number;
   statusGroup?: string;
   csmMediaId?: number;
   sortBy?: string;
   sortDir?: 'asc' | 'desc';
+  fileType?: number;
+  resolution?: string;
+  priority?: number;
+  convertServer?: string;
+  timeRange?: 'today' | '7d' | '30d' | 'all' | string;
 }
+

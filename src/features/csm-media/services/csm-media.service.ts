@@ -19,6 +19,8 @@ const mockMediaList: CsmMedia[] = Array.from({ length: 3798 }, (_, index) => {
     id,
     name: `Phim Hành Động Chiếu Rạp 2026 - Tập ${(index % 24) + 1} [Bản Gốc 4K Master]`,
     slug: `phim-hanh-dong-tap-${(index % 24) + 1}`,
+    shortDesc: 'Bản chiếu rạp chất lượng cao',
+    description: 'Nội dung phim hành động hấp dẫn',
     originalPath: `storage/nas/csm/media/2026/phim_hd_${id}_master.mp4`,
     convertPath: convertStatus === 1 ? `s3://viettel-ott-output/csm/${id}/manifest.m3u8` : null,
     audioPath: `/pe/audio/${id}.m4a`,
@@ -31,11 +33,14 @@ const mockMediaList: CsmMedia[] = Array.from({ length: 3798 }, (_, index) => {
     convertStatus,
     originUploadStatus: 1,
     convertPriority: (index * 13) % 100,
+    convertStartTime: new Date(Date.now() - index * 7200000).toISOString(),
+    convertEndTime: convertStatus === 1 ? new Date(Date.now() - index * 7200000 + 3600000).toISOString() : null,
     fileType: index % 2 === 0 ? 1 : 2,
     needEncryption: index % 3 === 0,
     resourceId: index % 3 === 0 ? `DRM_ASSET_CSM_${id}` : null,
     resolution: index % 3 === 0 ? '3840x2160' : '1920x1080',
     metaInfo: `{"aspect_ratio": "16:9", "fps": 29.97}`,
+    aiReviewStatus: index % 4 === 0 ? 1 : 0,
     createdAt: new Date(Date.now() - index * 7200000).toISOString(),
     updatedAt: new Date(Date.now() - (index * 3600000) % 86400000).toISOString(),
     linkedVideoId,
@@ -83,6 +88,42 @@ export const csmMediaService = {
         filtered = filtered.filter((m) => m.originUploadStatus === params.originUploadStatus);
       }
 
+      if (params?.timeRange) {
+        const now = new Date();
+        filtered = filtered.filter(m => {
+          const mDate = new Date(m.createdAt || m.updatedAt || new Date());
+          if (params.timeRange === 'today') {
+            return mDate.toDateString() === now.toDateString();
+          } else if (params.timeRange === '7d') {
+            return (now.getTime() - mDate.getTime()) <= 7 * 24 * 3600 * 1000;
+          } else if (params.timeRange === '30d') {
+            return (now.getTime() - mDate.getTime()) <= 30 * 24 * 3600 * 1000;
+          } else if (params.timeRange !== 'all') {
+            try {
+              const range = JSON.parse(params.timeRange as string);
+              if (Array.isArray(range) && range.length === 2) {
+                const start = new Date(range[0]);
+                const end = new Date(range[1]);
+                return mDate >= start && mDate <= end;
+              }
+            } catch { /* ignore */ }
+          }
+          return true;
+        });
+      }
+
+      if (params?.sortBy) {
+        const field = params.sortBy as keyof CsmMedia;
+        const dir = params.sortDir === 'asc' ? 1 : -1;
+        filtered.sort((a, b) => {
+          const valA = a[field] ?? '';
+          const valB = b[field] ?? '';
+          if (valA < valB) return -1 * dir;
+          if (valA > valB) return 1 * dir;
+          return 0;
+        });
+      }
+
       const totalElements = filtered.length;
       const totalPages = Math.ceil(totalElements / size) || 1;
       const content = filtered.slice(page * size, (page + 1) * size);
@@ -93,6 +134,7 @@ export const csmMediaService = {
         size,
         totalElements,
         totalPages,
+        first: page === 0,
         last: page >= totalPages - 1,
       };
     }
@@ -137,11 +179,52 @@ export const csmMediaService = {
       }
       return {
         csmMediaId: id,
+        mediaName: item?.name || 'Media',
         convertStatus: 100,
         originUploadStatus: 1,
-        linkedVideoId: item?.linkedVideoId ?? 999,
-        linkedVideoStatus: 0,
+        videoId: item?.linkedVideoId ?? 999,
+        videoStatus: 0,
         message: 'Re-encode triggered successfully (mock)',
+        triggeredAt: new Date().toISOString(),
+      };
+    }
+  },
+
+  /**
+   * Get filtered stats for CSM Media
+   */
+  async getStats(params?: CsmMediaFilterParams): Promise<{ total: number; waitingConvert: number; failed: number }> {
+    try {
+      const response = await httpClient.get<ApiResponse<any>>(
+        `${API_CONFIG.endpoints.csmMedia.list}/stats`,
+        { params }
+      );
+      return response.data.data;
+    } catch {
+      let filtered = [...mockMediaList];
+
+      if (params?.search) {
+        const q = params.search.toLowerCase();
+        filtered = filtered.filter(
+          (m) =>
+            m.id.toString().includes(q) ||
+            (m.name && m.name.toLowerCase().includes(q)) ||
+            (m.originalPath && m.originalPath.toLowerCase().includes(q))
+        );
+      }
+
+      if (params?.originUploadStatus !== undefined) {
+        filtered = filtered.filter((m) => m.originUploadStatus === params.originUploadStatus);
+      }
+
+      const waitingConvert = filtered.filter((m) => m.convertStatus === 100).length;
+      const failed = filtered.filter(
+        (m) => m.convertStatus && [24, 34, 44, 54, 64, 74].includes(m.convertStatus)
+      ).length;
+      return {
+        total: filtered.length,
+        waitingConvert,
+        failed,
       };
     }
   },

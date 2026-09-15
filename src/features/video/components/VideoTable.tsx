@@ -1,38 +1,15 @@
-import { useState, useMemo } from 'react';
-import {
-  useReactTable,
-  getCoreRowModel,
-  flexRender,
-  type ColumnDef,
-} from '@tanstack/react-table';
-import dayjs from 'dayjs';
-import { StatusTag } from './StatusTag';
-import { APP_CONFIG } from '@/config/app.config';
-import { VIDEO_STATUS_MAP } from '@/config/status.config';
-import type { Video } from '@/types/video.types';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { cn } from '@/lib/utils';
+import { useMemo, useState } from "react";
+import { Table, Dropdown, Tooltip } from "antd";
+import type { MenuProps } from "antd";
+import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
+import type { FilterValue, SorterResult } from "antd/es/table/interface";
+import dayjs from "dayjs";
+import { StatusTag } from "./StatusTag";
+import { canReconvert, isFullSuccess } from "@/config/status.config";
+import { APP_CONFIG } from "@/config/app.config";
+import type { Video } from "@/types/video.types";
+import { MoreVertical, Eye, Edit, RefreshCw, Check, Copy } from "lucide-react";
+import { TableSkeleton } from "@/components/TableSkeleton";
 
 interface VideoTableProps {
   videos: Video[];
@@ -41,9 +18,73 @@ interface VideoTableProps {
   pageSize: number;
   loading: boolean;
   onPageChange: (page: number, pageSize: number) => void;
+  onSortChange?: (sortBy: string, sortDir: "asc" | "desc") => void;
   onViewDetail: (video: Video) => void;
-  onEdit: (video: Video) => void;
-  onColumnFilterApply?: (filters: { csmMediaId?: number; status?: number }) => void;
+  onEdit?: (video: Video) => void;
+  onReconvert?: (video: Video) => void;
+}
+
+function cleanVal(v?: unknown): string {
+  if (v === null || v === undefined) return '';
+  const str = String(v).trim();
+  if (['None', 'none', '—', '-', '_', 'null', 'undefined'].includes(str)) return '';
+  return str;
+}
+
+function extractTitle(metaInfo: string | null): string {
+  const clean = cleanVal(metaInfo);
+  if (!clean) return "";
+  try {
+    return cleanVal(JSON.parse(clean).title);
+  } catch {
+    return "";
+  }
+}
+
+function parsePathStr(raw: string | null) {
+  const clean = cleanVal(raw);
+  if (!clean) return "";
+  try {
+    const parsed = JSON.parse(clean);
+    if (parsed && typeof parsed === "object") {
+      const parts: string[] = [];
+      if (cleanVal(parsed.domain)) parts.push(String(parsed.domain).trim().replace(/\/+$/, ''));
+      if (cleanVal(parsed.bucket)) parts.push(String(parsed.bucket).trim().replace(/^\/+|\/+$/g, ''));
+      if (cleanVal(parsed.path)) parts.push(String(parsed.path).trim().replace(/^\/+/, ''));
+      return parts.join("/");
+    }
+  } catch {}
+  return clean;
+}
+
+function formatDuration(seconds?: number | null): string {
+  if (!seconds) return "";
+  return `${seconds}s`; // Display as raw seconds based on reqs
+}
+
+function formatDate(isoString: string | null): string {
+  const clean = cleanVal(isoString);
+  if (!clean) return "";
+  return dayjs(clean).format("DD/MM/YYYY HH:mm:ss");
+}
+
+function CopyBtn({ value, label }: { value: string; label: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <Tooltip title={`Copy ${label}`}>
+      <span
+        onClick={(e) => {
+          e.stopPropagation();
+          navigator.clipboard.writeText(value);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        }}
+        className="ml-1.5 inline-flex items-center justify-center rounded text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+      >
+        {copied ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
+      </span>
+    </Tooltip>
+  );
 }
 
 export function VideoTable({
@@ -53,359 +94,200 @@ export function VideoTable({
   pageSize,
   loading,
   onPageChange,
+  onSortChange,
   onViewDetail,
   onEdit,
-  onColumnFilterApply,
+  onReconvert,
 }: VideoTableProps) {
-  // Column filter popover states
-  const [csmIdFilter, setCsmIdFilter] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  
+  const handleTableChange = (
+    pagination: TablePaginationConfig,
+    _filters: Record<string, FilterValue | null>,
+    sorter: SorterResult<Video> | SorterResult<Video>[]
+  ) => {
+    // Pagination (antd uses 1-based index, we use 0-based)
+    if (pagination.current && pagination.pageSize) {
+      onPageChange(pagination.current - 1, pagination.pageSize);
+    }
 
-  const formatDuration = (seconds?: number | null) => {
-    if (!seconds) return '—';
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}m ${secs}s`;
+    // Sorting
+    if (onSortChange && !Array.isArray(sorter) && sorter.columnKey) {
+      if (sorter.order) {
+        onSortChange(sorter.columnKey as string, sorter.order === 'ascend' ? 'asc' : 'desc');
+      } else {
+        // Default back to ID desc if sort is cleared
+        onSortChange('id', 'desc');
+      }
+    }
   };
 
-  const totalPages = Math.ceil(total / pageSize) || 1;
-
-  const columns = useMemo<ColumnDef<Video>[]>(
-    () => [
-      {
-        accessorKey: 'id',
-        header: 'ID',
-        size: 80,
-        cell: ({ getValue }) => (
-          <span className="font-mono font-bold text-primary">
-            #{getValue<number>()}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'csmMediaId',
-        header: () => (
-          <div className="flex items-center gap-1.5">
-            <span>CSM ID</span>
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  className={cn(
-                    'h-5 w-5 rounded hover:bg-muted inline-flex items-center justify-center text-[10px] text-muted-foreground hover:text-foreground cursor-pointer transition-colors',
-                    csmIdFilter && 'text-primary font-bold'
-                  )}
-                  title="Lọc theo CSM ID"
-                >
-                  ▼
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-56 p-3 space-y-2" align="start">
-                <p className="text-xs font-semibold text-foreground">Lọc theo CSM Media ID</p>
-                <Input
-                  placeholder="Nhập ID..."
-                  value={csmIdFilter}
-                  onChange={(e) => setCsmIdFilter(e.target.value)}
-                  className="h-8 text-xs"
-                />
-                <div className="flex justify-end gap-1.5 pt-1">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 px-2 text-xs"
-                    onClick={() => {
-                      setCsmIdFilter('');
-                      if (onColumnFilterApply) onColumnFilterApply({ csmMediaId: undefined });
-                    }}
-                  >
-                    Xóa
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="h-7 px-2 text-xs"
-                    onClick={() => {
-                      if (onColumnFilterApply) {
-                        onColumnFilterApply({
-                          csmMediaId: csmIdFilter ? Number(csmIdFilter) : undefined,
-                        });
-                      }
-                    }}
-                  >
-                    Áp dụng
-                  </Button>
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-        ),
-        size: 110,
-        cell: ({ getValue }) => {
-          const id = getValue<number>();
-          if (id === null || id === undefined) return <span className="text-muted-foreground">—</span>;
-          return (
-            <span className="font-mono text-xs px-1.5 py-0.5 rounded bg-muted text-foreground">
-              {id} {id <= 0 ? '(Test)' : ''}
+  const columns: ColumnsType<Video> = useMemo(() => [
+    {
+      title: "Tên video",
+      key: "title",
+      width: 280,
+      render: (_, record) => {
+        const title = extractTitle(record.metaInfo);
+        const csmId = record.csmMediaId;
+        return (
+          <div className="flex flex-col gap-0.5 max-w-[280px]">
+            <span className="text-[14px] font-[600] text-[#2f3e46] truncate" title={title || "Không có tên"}>
+              {title || `Video #${record.id}`}
             </span>
-          );
-        },
-      },
-      {
-        accessorKey: 'originalPath',
-        header: 'Đường dẫn file gốc',
-        cell: ({ getValue }) => {
-          const path = getValue<string>();
-          return (
-            <div className="max-w-[320px] truncate text-xs text-foreground" title={path || undefined}>
-              {path || '—'}
+            <span className="text-[12px] text-[#6c757d] font-mono flex items-center">
+              CSM ID: {csmId} <CopyBtn value={String(csmId)} label="CSM ID" />
+            </span>
+          </div>
+        );
+      }
+    },
+    {
+      title: "Original Path",
+      key: "originalPath",
+      width: 220,
+      render: (_, record) => {
+        const full = parsePathStr(record.originalPath);
+        if (!full) return null;
+        return (
+          <Tooltip title={
+            <div className="flex flex-col gap-1 max-w-[300px] break-all">
+              <span>{full}</span>
             </div>
-          );
-        },
-      },
-      {
-        id: 'resolution_duration',
-        header: 'Độ phân giải / Thời lượng',
-        size: 180,
-        cell: ({ row }) => (
-          <div className="flex items-center gap-1.5 text-xs">
-            <span className="font-medium text-foreground">
-              {row.original.resolution || '—'}
-            </span>
-            <span className="text-muted-foreground/50">|</span>
-            <span className="text-muted-foreground">
-              {formatDuration(row.original.duration)}
-            </span>
-          </div>
-        ),
-      },
-      {
-        accessorKey: 'priority',
-        header: 'Ưu tiên',
-        size: 90,
-        cell: ({ getValue }) => {
-          const prio = getValue<number | null>();
-          return (
-            <span
-              className={cn(
-                'font-mono text-xs font-semibold',
-                prio && prio > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'
-              )}
-            >
-              {prio ?? 0}
-            </span>
-          );
-        },
-      },
-      {
-        accessorKey: 'status',
-        header: () => (
-          <div className="flex items-center gap-1.5">
-            <span>Trạng thái</span>
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  className={cn(
-                    'h-5 w-5 rounded hover:bg-muted inline-flex items-center justify-center text-[10px] text-muted-foreground hover:text-foreground cursor-pointer transition-colors',
-                    statusFilter !== 'all' && 'text-primary font-bold'
-                  )}
-                  title="Lọc trạng thái cột"
-                >
-                  ▼
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-64 p-3 space-y-2" align="start">
-                <p className="text-xs font-semibold text-foreground">Lọc theo trạng thái</p>
-                <Select
-                  value={statusFilter}
-                  onValueChange={(val) => {
-                    setStatusFilter(val);
-                    if (onColumnFilterApply) {
-                      onColumnFilterApply({
-                        status: val === 'all' ? undefined : Number(val),
-                      });
-                    }
-                  }}
-                >
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Chọn trạng thái" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả</SelectItem>
-                    {Object.entries(VIDEO_STATUS_MAP).map(([code, info]) => (
-                      <SelectItem key={code} value={code}>
-                        {code} — {info.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </PopoverContent>
-            </Popover>
-          </div>
-        ),
-        size: 220,
-        cell: ({ getValue }) => <StatusTag status={getValue<number>()} />,
-      },
-      {
-        accessorKey: 'modifiedAt',
-        header: 'Cập nhật',
-        size: 140,
-        cell: ({ getValue }) => {
-          const date = getValue<string>();
-          return (
-            <span className="text-xs text-muted-foreground font-mono">
-              {date ? dayjs(date).format('YYYY-MM-DD HH:mm') : '—'}
-            </span>
-          );
-        },
-      },
-      {
-        id: 'actions',
-        header: 'Thao tác',
-        size: 140,
-        cell: ({ row }) => (
-          <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 px-2 text-xs font-medium text-primary hover:bg-primary/10"
-              onClick={() => onViewDetail(row.original)}
-            >
-              Chi tiết
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs font-medium text-muted-foreground hover:text-foreground"
-              onClick={() => onEdit(row.original)}
-            >
-              Sửa
-            </Button>
-          </div>
-        ),
-      },
-    ],
-    [csmIdFilter, statusFilter, onColumnFilterApply, onViewDetail, onEdit]
-  );
+          } placement="topLeft">
+            <div className="max-w-[200px] truncate text-sm text-primary hover:underline cursor-pointer flex items-center">
+              <span className="truncate">{full}</span>
+              <CopyBtn value={full} label="Path" />
+            </div>
+          </Tooltip>
+        );
+      }
+    },
+    {
+      title: "Nguồn video",
+      key: "source",
+      width: 120,
+      render: (_, record) => {
+        const csmId = record.csmMediaId;
+        if (csmId === 0) return <span className="text-violet-600 font-medium text-sm">FastChannel</span>;
+        if (csmId > 0) return <span className="text-blue-600 font-medium text-sm">Kho Nội dung</span>;
+        return <span className="text-orange-500 font-medium text-sm">Nội bộ / Test</span>;
+      }
+    },
+    {
+      title: "Phân giải",
+      dataIndex: "resolution",
+      key: "resolution",
+      width: 100,
+      render: (val) => <span className="text-sm font-medium">{cleanVal(val)}</span>
+    },
+    {
+      title: "Thời lượng",
+      dataIndex: "duration",
+      key: "duration",
+      width: 90,
+      sorter: true,
+      render: (val) => <span className="text-sm font-mono">{formatDuration(val)}</span>
+    },
+    {
+      title: "Bắt đầu Convert",
+      dataIndex: "convertStartTime",
+      key: "convertStartTime",
+      width: 150,
+      sorter: true,
+      render: (val) => <span className="text-sm">{formatDate(val)}</span>
+    },
+    {
+      title: "Kết thúc Convert",
+      dataIndex: "convertEndTime",
+      key: "convertEndTime",
+      width: 150,
+      sorter: true,
+      render: (val) => <span className="text-sm">{formatDate(val)}</span>
+    },
+    {
+      title: "Ưu tiên",
+      dataIndex: "priority",
+      key: "priority",
+      width: 80,
+      sorter: true,
+      render: (val) => <span className="text-sm">{val ?? 0}</span>
+    },
+    {
+      title: "Trạng thái",
+      dataIndex: "status",
+      key: "status",
+      width: 200,
+      render: (val) => <StatusTag status={val} />
+    },
+    {
+      title: "",
+      key: "actions",
+      width: 60,
+      fixed: 'right',
+      render: (_, record) => {
+        const _canReconvert = canReconvert(record.status);
+        const _isSuccess = isFullSuccess(record.status);
+        
+        const items: MenuProps['items'] = [
+          {
+            key: 'view',
+            icon: <Eye size={16} />,
+            label: 'Xem chi tiết',
+            onClick: () => onViewDetail(record)
+          },
+          {
+            key: 'edit',
+            icon: <Edit size={16} />,
+            label: 'Chỉnh sửa',
+            onClick: () => onEdit && onEdit(record)
+          },
+          { type: 'divider' },
+          {
+            key: 'reconvert',
+            icon: <RefreshCw size={16} />,
+            label: _isSuccess ? 'Re-encode (CSM)' : 'Re-verify',
+            disabled: !_canReconvert,
+            onClick: () => onReconvert && onReconvert(record)
+          }
+        ];
 
-  const table = useReactTable({
-    data: videos,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    manualPagination: true,
-    pageCount: totalPages,
-  });
+        return (
+          <Dropdown menu={{ items }} trigger={['click']} placement="bottomRight">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted cursor-pointer text-muted-foreground">
+              <MoreVertical size={16} />
+            </span>
+          </Dropdown>
+        );
+      }
+    }
+  ], [onViewDetail, onEdit, onReconvert]);
 
-  const startRecord = total > 0 ? page * pageSize + 1 : 0;
-  const endRecord = Math.min((page + 1) * pageSize, total);
+  if (loading && videos.length === 0) {
+    return <TableSkeleton columns={10} rows={10} />;
+  }
 
   return (
-    <div className="bg-card border border-border rounded-xl shadow-xs overflow-hidden">
-      {/* Scrollable Table Container */}
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="hover:bg-transparent">
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    style={{ width: header.column.getSize() }}
-                    className="text-xs font-semibold text-muted-foreground"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground">
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <span className="h-5 w-5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-                    <span className="text-xs">Đang tải dữ liệu video...</span>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  onClick={() => onViewDetail(row.original)}
-                  className="cursor-pointer hover:bg-muted/40 transition-colors"
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="py-3">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-28 text-center text-muted-foreground text-xs">
-                  Không tìm thấy video nào phù hợp với bộ lọc.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Pagination & Page Size Toolbar */}
-      <div className="p-3 sm:p-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground bg-muted/20">
-        <div>
-          Hiển thị <span className="font-semibold text-foreground">{startRecord}-{endRecord}</span> trên tổng số{' '}
-          <span className="font-semibold text-foreground font-mono">{total.toLocaleString()}</span> video
-        </div>
-
-        <div className="flex items-center gap-2 sm:gap-4">
-          <div className="flex items-center gap-1.5">
-            <span>Hiển thị:</span>
-            <Select
-              value={String(pageSize)}
-              onValueChange={(val) => onPageChange(0, Number(val))}
-            >
-              <SelectTrigger className="h-7 w-20 text-xs">
-                <SelectValue placeholder="Số hàng" />
-              </SelectTrigger>
-              <SelectContent>
-                {APP_CONFIG.pagination.pageSizeOptions.map((sz) => (
-                  <SelectItem key={sz} value={String(sz)}>
-                    {sz} / trang
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 px-2 text-xs"
-              onClick={() => onPageChange(page - 1, pageSize)}
-              disabled={page <= 0 || loading}
-            >
-              ◀ Trước
-            </Button>
-            <span className="px-2 font-mono font-medium text-foreground">
-              {page + 1} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 px-2 text-xs"
-              onClick={() => onPageChange(page + 1, pageSize)}
-              disabled={page >= totalPages - 1 || loading}
-            >
-              Sau ▶
-            </Button>
-          </div>
-        </div>
-      </div>
+    <div className="bg-card border border-border rounded-xl shadow-xs overflow-hidden antd-table-wrapper">
+      <Table
+        columns={columns}
+        dataSource={videos}
+        rowKey="id"
+        onChange={handleTableChange}
+        loading={loading}
+        pagination={{
+          current: page + 1,
+          pageSize: pageSize,
+          total: total,
+          showSizeChanger: true,
+          pageSizeOptions: APP_CONFIG.pagination.pageSizeOptions.map(String),
+          showTotal: (total, range) => `Hiển thị ${range[0]}-${range[1]} / tổng ${total.toLocaleString()}`,
+          position: ['bottomLeft'],
+          className: "px-4 py-3 m-0 border-t border-border/50 bg-muted/20"
+        }}
+        scroll={{ x: 1400 }}
+        size="middle"
+        rowClassName="hover:bg-muted/40 transition-colors"
+      />
     </div>
   );
 }

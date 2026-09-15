@@ -1,12 +1,12 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { toast } from 'sonner';
-import { videoService } from '../services/video.service';
-import { APP_CONFIG } from '@/config/app.config';
+﻿import { useState, useEffect, useCallback, useRef } from "react";
+import { toast } from "sonner";
+import { videoService } from "../services/video.service";
+import { APP_CONFIG } from "@/config/app.config";
 import type {
   Video,
   VideoFilterParams,
   VideoUpdateRequest,
-} from '@/types/video.types';
+} from "@/types/video.types";
 
 export function useVideos() {
   const [videos, setVideos] = useState<Video[]>([]);
@@ -14,45 +14,54 @@ export function useVideos() {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState<number>(APP_CONFIG.pagination.defaultPageSize);
   const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState<Omit<VideoFilterParams, 'page' | 'size'>>({
-    search: '',
-    statusGroup: 'all',
+  const [filters, setFilters] = useState<Omit<VideoFilterParams, "page" | "size">>({
+    search: "",
+    statusGroup: "all",
     status: undefined,
     csmMediaId: undefined,
-    sortBy: 'id',
-    sortDir: 'desc',
+    sortBy: "id",
+    sortDir: "desc",
+    fileType: undefined,
+    resolution: undefined,
+    convertServer: undefined,
   });
 
   const isMounted = useRef(true);
 
-  const fetchVideos = useCallback(async (silent = false) => {
-    if (!silent) setLoading(true);
-    try {
-      const response = await videoService.getVideos({
-        page,
-        size: pageSize,
-        search: filters.search ? filters.search.trim() : undefined,
-        statusGroup: filters.statusGroup !== 'all' ? filters.statusGroup : undefined,
-        status: filters.status,
-        csmMediaId: filters.csmMediaId,
-        sortBy: filters.sortBy,
-        sortDir: filters.sortDir,
-      });
+  const fetchVideos = useCallback(
+    async (silent = false) => {
+      if (!silent) setLoading(true);
+      try {
+        const response = await videoService.getVideos({
+          page,
+          size: pageSize,
+          search: filters.search ? filters.search.trim() : undefined,
+          statusGroup: filters.statusGroup !== "all" ? filters.statusGroup : undefined,
+          status: filters.status,
+          csmMediaId: filters.csmMediaId,
+          sortBy: filters.sortBy,
+          sortDir: filters.sortDir,
+          fileType: filters.fileType,
+          resolution: filters.resolution,
+          convertServer: filters.convertServer,
+        });
 
-      if (isMounted.current) {
-        setVideos(response.content);
-        setTotal(response.totalElements);
+        if (isMounted.current) {
+          setVideos(response.content);
+          setTotal(response.totalElements);
+        }
+      } catch {
+        if (isMounted.current && !silent) {
+          toast.error("Không thể tải danh sách video");
+        }
+      } finally {
+        if (isMounted.current && !silent) {
+          setLoading(false);
+        }
       }
-    } catch {
-      if (isMounted.current && !silent) {
-        toast.error('Không thể tải danh sách video');
-      }
-    } finally {
-      if (isMounted.current && !silent) {
-        setLoading(false);
-      }
-    }
-  }, [page, pageSize, filters]);
+    },
+    [page, pageSize, filters]
+  );
 
   // Initial and reactive fetch
   useEffect(() => {
@@ -64,7 +73,6 @@ export function useVideos() {
     const interval = setInterval(() => {
       fetchVideos(true);
     }, APP_CONFIG.pollingIntervalMs);
-
     return () => clearInterval(interval);
   }, [fetchVideos]);
 
@@ -88,7 +96,7 @@ export function useVideos() {
       return updated;
     } catch {
       toast.error(`Cập nhật video #${id} thất bại`);
-      throw new Error('Update failed');
+      throw new Error("Update failed");
     }
   }, []);
 
@@ -100,7 +108,7 @@ export function useVideos() {
       return updated;
     } catch {
       toast.error(`Đổi trạng thái video #${id} thất bại`);
-      throw new Error('Status update failed');
+      throw new Error("Status update failed");
     }
   }, []);
 
