@@ -30,7 +30,7 @@ export function LogoutConfirmDialog({
           <DialogTitle className="text-base font-bold font-inter text-foreground">
             Xác nhận đăng xuất
           </DialogTitle>
-          <p className="text-xs sm:text-sm text-muted-foreground font-roboto leading-relaxed">
+          <p className="text-xs sm:text-sm text-muted-foreground font-inter leading-relaxed">
             Bạn có chắc chắn muốn đăng xuất khỏi hệ thống Dashboard PE không? Phiên làm việc của bạn sẽ kết thúc.
           </p>
         </DialogHeader>

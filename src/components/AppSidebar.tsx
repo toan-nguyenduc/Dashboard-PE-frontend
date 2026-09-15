@@ -105,7 +105,7 @@ export function AppSidebar({ collapsed, setCollapsed, toggled, setToggled, isMob
                 color: active ? themeColors.menuItemTextActive : themeColors.menuItemText,
                 backgroundColor: active ? themeColors.menuItemBgActive : 'transparent',
                 fontWeight: active ? 600 : 500,
-                fontFamily: 'Inter, Roboto, sans-serif',
+                fontFamily: 'Inter, sans-serif',
                 '&:hover': {
                   backgroundColor: themeColors.menuItemBgHover,
                   color: themeColors.menuItemTextHover,

@@ -110,7 +110,7 @@
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);
-  font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   min-height: 100vh;
   margin: 0;
   -webkit-font-smoothing: antialiased;
@@ -137,9 +137,6 @@ main {
   font-family: 'Inter', sans-serif;
 }
 
-.font-roboto {
-  font-family: 'Roboto', sans-serif;
-}
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
@@ -210,25 +207,38 @@ main {
 .video-data-table .ant-pagination.video-pagination {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  justify-content: center;
+  flex-wrap: nowrap;
   gap: 0.75rem;
-  padding: 0.75rem 1rem;
+  min-height: 5.5rem;
+  padding: 1rem 1.5rem;
   margin: 0 !important;
-  background: hsl(var(--muted) / 0.35);
+  background: hsl(var(--card));
   border-top: 1px solid hsl(var(--border));
+  border-radius: 0 0 1rem 1rem;
 }
 
-.video-data-table .ant-pagination-total-text {
-  margin-right: auto;
-  color: hsl(var(--muted-foreground));
-  font-size: 0.8125rem;
+.video-data-table .ant-pagination-total-text,
+.video-data-table .ant-pagination-options {
+  display: none !important;
 }
 
 .video-data-table .ant-pagination-item,
 .video-data-table .ant-pagination-prev,
-.video-data-table .ant-pagination-next,
-.video-data-table .ant-pagination-options {
+.video-data-table .ant-pagination-next {
   margin: 0;
+}
+
+.video-data-table .ant-pagination-list {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 4rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 999px;
+  background: hsl(var(--muted) / 0.3);
+  box-shadow: 0 8px 18px hsl(222 25% 4% / 0.12);
 }
 
 .video-data-table .ant-pagination-item,
@@ -276,8 +286,15 @@ main {
 }
 
 .video-data-table .ant-pagination-item-active {
+  width: 3.5rem;
+  height: 3.5rem !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-color: hsl(var(--primary)) !important;
-  background: hsl(var(--primary) / 0.16) !important;
+  border-radius: 999px !important;
+  background: hsl(var(--primary) / 0.72) !important;
+  box-shadow: 0 5px 12px hsl(var(--primary) / 0.25);
 }
 
 .video-data-table .ant-pagination-item-active a {

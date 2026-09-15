@@ -4,8 +4,7 @@ import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
 import type { FilterValue, SorterResult } from "antd/es/table/interface";
 import dayjs from "dayjs";
 import { StatusTag } from "./StatusTag";
-import { canReconvert, isFullSuccess } from "@/config/status.config";
-import { APP_CONFIG } from "@/config/app.config";
+import { canReconvert } from "@/config/status.config";
 import type { Video } from "@/types/video.types";
 import { Check, Copy, ChevronLeft, ChevronRight } from "lucide-react";
 import { TableSkeleton } from "@/components/TableSkeleton";
@@ -127,6 +126,7 @@ export function VideoTable({
       title: "Tên video",
       key: "title",
       width: 280,
+      sorter: true,
       onHeaderCell: () => ({ className: "text-left text-sm font-semibold" }),
       render: (_, record) => {
         const title = extractTitle(record.metaInfo);
@@ -147,6 +147,7 @@ export function VideoTable({
       title: "Original Path",
       key: "originalPath",
       width: 220,
+      sorter: true,
       onHeaderCell: () => ({ className: "text-left text-sm font-semibold" }),
       render: (_, record) => {
         const full = parsePathStr(record.originalPath);
@@ -169,6 +170,7 @@ export function VideoTable({
       title: "Nguồn video",
       key: "source",
       width: 120,
+      sorter: true,
       render: (_, record) => {
         const csmId = record.csmMediaId;
         if (csmId === 0) return <span className="text-violet-600 font-medium text-sm">FastChannel</span>;
@@ -181,6 +183,7 @@ export function VideoTable({
       dataIndex: "resolution",
       key: "resolution",
       width: 100,
+      sorter: true,
       render: (val) => <span className="text-sm font-medium">{cleanVal(val)}</span>
     },
     {
@@ -208,7 +211,7 @@ export function VideoTable({
       render: (val) => <span className="text-sm">{formatDate(val)}</span>
     },
     {
-      title: "Ưu tiên",
+      title: "Độ ưu tiên",
       dataIndex: "priority",
       key: "priority",
       width: 80,
@@ -220,6 +223,7 @@ export function VideoTable({
       dataIndex: "status",
       key: "status",
       width: 200,
+      sorter: true,
       onHeaderCell: () => ({ className: "text-left text-sm font-semibold" }),
       render: (val) => <StatusTag status={val} />
     },
@@ -232,8 +236,6 @@ export function VideoTable({
       onCell: () => ({ className: "video-action-cell" }),
       render: (_, record) => {
         const canRunReconvert = canReconvert(record.status);
-        const isSuccess = isFullSuccess(record.status);
-
         return (
           <div className="flex items-center gap-1.5 whitespace-nowrap">
             <button
@@ -256,7 +258,7 @@ export function VideoTable({
               onClick={() => onReconvert?.(record)}
               className="rounded-md px-2.5 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40 disabled:cursor-not-allowed disabled:opacity-40 transition-colors"
             >
-              {isSuccess ? 'Re-encode' : 'Re-verify'}
+              Re-encode
             </button>
           </div>
         );
@@ -280,10 +282,8 @@ export function VideoTable({
           current: page + 1,
           pageSize: pageSize,
           total: total,
-          showSizeChanger: true,
-          pageSizeOptions: APP_CONFIG.pagination.pageSizeOptions.map(String),
-          showTotal: (total, range) => `Hiển thị ${range[0]}-${range[1]} / tổng ${total.toLocaleString()}`,
-          position: ['bottomLeft'],
+          showSizeChanger: false,
+          position: ['bottomCenter'],
           itemRender: (_pageNumber, type, originalElement) => {
             if (type === 'prev') {
               return (
