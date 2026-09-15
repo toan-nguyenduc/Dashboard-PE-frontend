@@ -117,6 +117,11 @@ export function VideoListPage() {
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
         {/* Total */}
         <Card
+          role="button"
+          tabIndex={0}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") setFilters({ statusGroup: "all", status: undefined });
+          }}
           onClick={() => setFilters({ statusGroup: "all", status: undefined })}
           className={cn(
             "min-h-[126px] p-4 sm:p-5 cursor-pointer hover:border-primary/50 transition-all shadow-xs rounded-xl",
@@ -133,6 +138,11 @@ export function VideoListPage() {
 
         {/* Processing */}
         <Card
+          role="button"
+          tabIndex={0}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") setFilters({ statusGroup: "processing", status: undefined });
+          }}
           onClick={() => setFilters({ statusGroup: "processing", status: undefined })}
           className={cn(
             "min-h-[126px] p-4 sm:p-5 cursor-pointer hover:border-blue-500/50 transition-all shadow-xs rounded-xl bg-blue-500/5 border-blue-500/20",
@@ -150,6 +160,11 @@ export function VideoListPage() {
 
         {/* Failed */}
         <Card
+          role="button"
+          tabIndex={0}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") setFilters({ statusGroup: "failed", status: undefined });
+          }}
           onClick={() => setFilters({ statusGroup: "failed", status: undefined })}
           className={cn(
             "min-h-[126px] p-4 sm:p-5 cursor-pointer hover:border-red-500/50 transition-all shadow-xs rounded-xl bg-red-500/5 border-red-500/20",
@@ -167,6 +182,11 @@ export function VideoListPage() {
 
         {/* Success */}
         <Card
+          role="button"
+          tabIndex={0}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") setFilters({ statusGroup: "success", status: undefined });
+          }}
           onClick={() => setFilters({ statusGroup: "success", status: undefined })}
           className={cn(
             "min-h-[126px] p-4 sm:p-5 cursor-pointer hover:border-emerald-500/50 transition-all shadow-xs rounded-xl bg-emerald-500/5 border-emerald-500/20",

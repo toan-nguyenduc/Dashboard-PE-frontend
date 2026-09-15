@@ -71,7 +71,9 @@ function CopyBtn({ value, label }: { value: string; label: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <Tooltip title={`Copy ${label}`}>
-      <span
+      <button
+        type="button"
+        aria-label={`Copy ${label}`}
         onClick={(e) => {
           e.stopPropagation();
           navigator.clipboard.writeText(value);
@@ -81,7 +83,7 @@ function CopyBtn({ value, label }: { value: string; label: string }) {
         className="ml-1.5 inline-flex items-center justify-center rounded text-muted-foreground hover:text-primary transition-colors cursor-pointer"
       >
         {copied ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
-      </span>
+      </button>
     </Tooltip>
   );
 }
