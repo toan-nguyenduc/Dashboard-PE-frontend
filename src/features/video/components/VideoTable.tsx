@@ -125,6 +125,7 @@ export function VideoTable({
       title: "Tên video",
       key: "title",
       width: 280,
+      onHeaderCell: () => ({ className: "text-left text-sm font-semibold" }),
       render: (_, record) => {
         const title = extractTitle(record.metaInfo);
         const csmId = record.csmMediaId;
@@ -144,6 +145,7 @@ export function VideoTable({
       title: "Original Path",
       key: "originalPath",
       width: 220,
+      onHeaderCell: () => ({ className: "text-left text-sm font-semibold" }),
       render: (_, record) => {
         const full = parsePathStr(record.originalPath);
         if (!full) return null;
@@ -216,6 +218,7 @@ export function VideoTable({
       dataIndex: "status",
       key: "status",
       width: 200,
+      onHeaderCell: () => ({ className: "text-left text-sm font-semibold" }),
       render: (val) => <StatusTag status={val} />
     },
     {
@@ -223,6 +226,8 @@ export function VideoTable({
       key: "actions",
       width: 250,
       fixed: 'right',
+      onHeaderCell: () => ({ className: "bg-card text-left text-sm font-semibold shadow-[-6px_0_12px_-12px_rgba(15,23,42,0.45)]" }),
+      onCell: () => ({ className: "bg-card border-l border-border/60 shadow-[-6px_0_12px_-12px_rgba(15,23,42,0.35)]" }),
       render: (_, record) => {
         const canRunReconvert = canReconvert(record.status);
         const isSuccess = isFullSuccess(record.status);
@@ -232,14 +237,14 @@ export function VideoTable({
             <button
               type="button"
               onClick={() => onViewDetail(record)}
-              className="rounded-md px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
+              className="rounded-md px-2.5 py-1.5 text-xs font-medium text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 transition-colors"
             >
               Xem
             </button>
             <button
               type="button"
               onClick={() => onEdit?.(record)}
-              className="rounded-md px-2 py-1 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+              className="rounded-md px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 transition-colors"
             >
               Sửa
             </button>
@@ -247,7 +252,7 @@ export function VideoTable({
               type="button"
               disabled={!canRunReconvert}
               onClick={() => onReconvert?.(record)}
-              className="rounded-md px-2 py-1 text-xs font-medium text-amber-700 hover:bg-amber-500/10 disabled:cursor-not-allowed disabled:opacity-40 transition-colors"
+              className="rounded-md px-2.5 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40 disabled:cursor-not-allowed disabled:opacity-40 transition-colors"
             >
               {isSuccess ? 'Re-encode' : 'Re-verify'}
             </button>
@@ -279,8 +284,9 @@ export function VideoTable({
           position: ['bottomLeft'],
           className: "px-4 py-3 m-0 border-t border-border/50 bg-muted/20"
         }}
-        scroll={{ x: 1400 }}
+        scroll={{ x: 1650 }}
         size="middle"
+        className="video-data-table"
         rowClassName="hover:bg-muted/40 transition-colors"
       />
     </div>
