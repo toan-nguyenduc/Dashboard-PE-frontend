@@ -1,18 +1,20 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '../hooks/useAuth';
 import { APP_CONFIG } from '@/config/app.config';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 
 /**
- * Keycloak SSO Login Page.
- * Pure centralized authentication via Keycloak OIDC/PKCE.
+ * Local login page while external SSO is disabled.
  */
 export function LoginPage() {
-  const [ssoLoading, setSsoLoading] = useState(false);
-  const { loginWithKeycloak, isAuthenticated } = useAuth();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -23,13 +25,16 @@ export function LoginPage() {
     return null;
   }
 
-  const handleKeycloakLogin = async () => {
-    setSsoLoading(true);
+  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsSubmitting(true);
     try {
-      await loginWithKeycloak();
-    } catch {
-      toast.error('Không thể kết nối đến máy chủ Keycloak SSO. Vui lòng kiểm tra lại dịch vụ.');
-      setSsoLoading(false);
+      await login({ username, password });
+      navigate(from, { replace: true });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Đăng nhập thất bại');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -52,24 +57,31 @@ export function LoginPage() {
           </p>
         </div>
 
-        {/* Primary Keycloak SSO Action */}
-        <div className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-4">
+          <Input
+            type="text"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+            placeholder="Tên đăng nhập"
+            autoComplete="username"
+            required
+          />
+          <Input
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="Mật khẩu"
+            autoComplete="current-password"
+            required
+          />
           <Button
-            type="button"
-            onClick={handleKeycloakLogin}
-            disabled={ssoLoading}
+            type="submit"
+            disabled={isSubmitting}
             className="w-full h-11 font-semibold text-sm shadow-md bg-primary hover:bg-primary/90 flex items-center justify-center gap-2"
           >
-            <span className="font-mono text-xs px-1.5 py-0.5 rounded bg-primary-foreground/20">SSO</span>
-            <span>{ssoLoading ? 'Đang chuyển hướng...' : 'Đăng nhập với Keycloak SSO'}</span>
+            {isSubmitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
           </Button>
-
-          <div className="text-center">
-            <span className="text-[11px] text-muted-foreground font-mono">
-              Keycloak OpenID Connect
-            </span>
-          </div>
-        </div>
+        </form>
       </Card>
     </div>
   );

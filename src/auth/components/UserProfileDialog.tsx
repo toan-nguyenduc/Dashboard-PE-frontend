@@ -10,9 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/auth/hooks/useAuth';
-import { updateKeycloakUserProfile } from '@/auth/services/userService';
-import { keycloak } from '@/config/keycloak.config';
-import { User, Mail, ShieldCheck, Key, Edit3, ArrowLeft } from 'lucide-react';
+import { updateUserProfile } from '@/auth/services/userService';
+import { User, Mail, ShieldCheck, Edit3, ArrowLeft } from 'lucide-react';
 
 interface UserProfileDialogProps {
   open: boolean;
@@ -43,15 +42,8 @@ export function UserProfileDialog({
 
   useEffect(() => {
     if (open) {
-      const initialName =
-        username ||
-        keycloak.tokenParsed?.name ||
-        keycloak.tokenParsed?.preferred_username ||
-        'Admin';
-      const initialEmail =
-        keycloak.tokenParsed?.email ||
-        localStorage.getItem('pe_user_email') ||
-        'admin@viettel.vn';
+      const initialName = username || 'Admin';
+      const initialEmail = localStorage.getItem('pe_user_email') || 'admin@viettel.vn';
 
       setName(initialName);
       setEmail(initialEmail);
@@ -101,7 +93,7 @@ export function UserProfileDialog({
 
     setLoading(true);
     try {
-      const res = await updateKeycloakUserProfile({
+      const res = await updateUserProfile({
         name,
         email,
         currentPassword: showPasswordFields ? currentPassword : undefined,
@@ -122,7 +114,7 @@ export function UserProfileDialog({
         setErrorMsg(res.message);
       }
     } catch (err: any) {
-      setErrorMsg(err?.message || 'Có lỗi xảy ra khi cập nhật thông tin lên Keycloak');
+      setErrorMsg(err?.message || 'Có lỗi xảy ra khi cập nhật thông tin tài khoản');
     } finally {
       setLoading(false);
     }
@@ -223,13 +215,6 @@ export function UserProfileDialog({
                 <span className="font-semibold text-primary text-right">Quản trị viên (Admin)</span>
               </div>
 
-              <div className="flex items-center justify-between py-1.5">
-                <span className="text-muted-foreground flex items-center gap-1.5">
-                  <Key size={14} className="text-primary/70" />
-                  Nền tảng xác thực
-                </span>
-                <span className="font-medium text-foreground text-right">Keycloak SSO</span>
-              </div>
             </div>
 
             <DialogFooter className="gap-2 sm:gap-0 pt-2">

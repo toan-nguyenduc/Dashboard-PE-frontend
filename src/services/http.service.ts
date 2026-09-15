@@ -2,12 +2,11 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { toast } from 'sonner';
 import { API_CONFIG } from '../config/api.config';
 import { APP_CONFIG } from '../config/app.config';
-import { keycloak } from '../config/keycloak.config';
 
 /**
  * Configured Axios instance for all API calls.
  *
- * - Automatically attaches Keycloak JWT Bearer token on every request.
+ * - Automatically attaches the local session token on every request.
  * - Handles 401 Unauthorized globally by clearing auth state and redirecting to login.
  * - Handles 403 Forbidden globally by displaying error toast.
  */
@@ -22,8 +21,7 @@ const httpClient = axios.create({
 /** Request interceptor — attach JWT Bearer token */
 httpClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Prefer Keycloak token, fallback to localStorage
-    const token = keycloak.token || localStorage.getItem(APP_CONFIG.storage.token);
+    const token = localStorage.getItem(APP_CONFIG.storage.token);
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
