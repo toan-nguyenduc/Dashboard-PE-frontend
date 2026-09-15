@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
-import { Table, Dropdown, Tooltip } from "antd";
-import type { MenuProps } from "antd";
+import { Table, Tooltip } from "antd";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
 import type { FilterValue, SorterResult } from "antd/es/table/interface";
 import dayjs from "dayjs";
@@ -8,7 +7,7 @@ import { StatusTag } from "./StatusTag";
 import { canReconvert, isFullSuccess } from "@/config/status.config";
 import { APP_CONFIG } from "@/config/app.config";
 import type { Video } from "@/types/video.types";
-import { MoreVertical, Eye, Edit, RefreshCw, Check, Copy } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 import { TableSkeleton } from "@/components/TableSkeleton";
 
 interface VideoTableProps {
@@ -220,43 +219,39 @@ export function VideoTable({
       render: (val) => <StatusTag status={val} />
     },
     {
-      title: "",
+      title: "Thao tác",
       key: "actions",
-      width: 60,
+      width: 250,
       fixed: 'right',
       render: (_, record) => {
-        const _canReconvert = canReconvert(record.status);
-        const _isSuccess = isFullSuccess(record.status);
-        
-        const items: MenuProps['items'] = [
-          {
-            key: 'view',
-            icon: <Eye size={16} />,
-            label: 'Xem chi tiết',
-            onClick: () => onViewDetail(record)
-          },
-          {
-            key: 'edit',
-            icon: <Edit size={16} />,
-            label: 'Chỉnh sửa',
-            onClick: () => onEdit && onEdit(record)
-          },
-          { type: 'divider' },
-          {
-            key: 'reconvert',
-            icon: <RefreshCw size={16} />,
-            label: _isSuccess ? 'Re-encode (CSM)' : 'Re-verify',
-            disabled: !_canReconvert,
-            onClick: () => onReconvert && onReconvert(record)
-          }
-        ];
+        const canRunReconvert = canReconvert(record.status);
+        const isSuccess = isFullSuccess(record.status);
 
         return (
-          <Dropdown menu={{ items }} trigger={['click']} placement="bottomRight">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted cursor-pointer text-muted-foreground">
-              <MoreVertical size={16} />
-            </span>
-          </Dropdown>
+          <div className="flex items-center gap-1.5 whitespace-nowrap">
+            <button
+              type="button"
+              onClick={() => onViewDetail(record)}
+              className="rounded-md px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
+            >
+              Xem
+            </button>
+            <button
+              type="button"
+              onClick={() => onEdit?.(record)}
+              className="rounded-md px-2 py-1 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+            >
+              Sửa
+            </button>
+            <button
+              type="button"
+              disabled={!canRunReconvert}
+              onClick={() => onReconvert?.(record)}
+              className="rounded-md px-2 py-1 text-xs font-medium text-amber-700 hover:bg-amber-500/10 disabled:cursor-not-allowed disabled:opacity-40 transition-colors"
+            >
+              {isSuccess ? 'Re-encode' : 'Re-verify'}
+            </button>
+          </div>
         );
       }
     }
