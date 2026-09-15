@@ -187,7 +187,7 @@ main {
   text-align: left;
 }
 
-.video-data-table .ant-pagination {
+.video-data-table .ant-pagination.video-pagination {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -212,11 +212,13 @@ main {
 }
 
 .video-data-table .ant-pagination-item,
+.video-data-table .ant-pagination-prev,
+.video-data-table .ant-pagination-next,
 .video-data-table .ant-pagination-prev button,
 .video-data-table .ant-pagination-next button,
 .video-data-table .ant-select-selector {
-  min-width: 2rem;
-  height: 2rem !important;
+  min-width: 2.25rem;
+  height: 2.25rem !important;
   border-radius: 0.5rem !important;
   border-color: hsl(var(--border)) !important;
   background: hsl(var(--card)) !important;
@@ -227,6 +229,30 @@ main {
 .video-data-table .ant-pagination-prev button,
 .video-data-table .ant-pagination-next button {
   color: hsl(var(--muted-foreground));
+}
+
+.video-data-table .ant-pagination-item,
+.video-data-table .ant-pagination-prev,
+.video-data-table .ant-pagination-next {
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.video-data-table .ant-pagination-item:hover,
+.video-data-table .ant-pagination-prev:hover,
+.video-data-table .ant-pagination-next:hover {
+  border-color: hsl(var(--primary) / 0.65) !important;
+  background: hsl(var(--primary) / 0.08) !important;
+}
+
+.video-data-table .ant-pagination-item:focus-visible,
+.video-data-table .ant-pagination-prev:focus-visible,
+.video-data-table .ant-pagination-next:focus-visible,
+.video-data-table .ant-pagination-item a:focus-visible,
+.video-data-table .ant-pagination-prev button:focus-visible,
+.video-data-table .ant-pagination-next button:focus-visible,
+.video-data-table .ant-select-selector:focus-within {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
 }
 
 .video-data-table .ant-pagination-item-active {
@@ -254,7 +280,7 @@ main {
     margin-right: 0;
   }
 
-  .video-data-table .ant-pagination {
+  .video-data-table .ant-pagination.video-pagination {
     justify-content: flex-end;
   }
 }

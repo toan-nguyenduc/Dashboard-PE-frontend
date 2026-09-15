@@ -7,7 +7,7 @@ import { StatusTag } from "./StatusTag";
 import { canReconvert, isFullSuccess } from "@/config/status.config";
 import { APP_CONFIG } from "@/config/app.config";
 import type { Video } from "@/types/video.types";
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, ChevronLeft, ChevronRight } from "lucide-react";
 import { TableSkeleton } from "@/components/TableSkeleton";
 
 interface VideoTableProps {
@@ -284,7 +284,24 @@ export function VideoTable({
           pageSizeOptions: APP_CONFIG.pagination.pageSizeOptions.map(String),
           showTotal: (total, range) => `Hiển thị ${range[0]}-${range[1]} / tổng ${total.toLocaleString()}`,
           position: ['bottomLeft'],
-          className: "px-4 py-3 m-0 border-t border-border/50 bg-muted/20"
+          itemRender: (_pageNumber, type, originalElement) => {
+            if (type === 'prev') {
+              return (
+                <span aria-label="Trang trước" title="Trang trước" className="inline-flex h-9 w-9 items-center justify-center">
+                  <ChevronLeft size={17} aria-hidden="true" />
+                </span>
+              );
+            }
+            if (type === 'next') {
+              return (
+                <span aria-label="Trang tiếp theo" title="Trang tiếp theo" className="inline-flex h-9 w-9 items-center justify-center">
+                  <ChevronRight size={17} aria-hidden="true" />
+                </span>
+              );
+            }
+            return originalElement;
+          },
+          className: "video-pagination m-0 border-t border-border/50 bg-muted/20"
         }}
         scroll={{ x: 1650 }}
         size="middle"
